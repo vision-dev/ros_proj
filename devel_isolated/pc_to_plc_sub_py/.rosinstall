@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/student/Asparagus_project/ros_proj/devel_isolated/pc_to_plc_sub_py/setup.sh

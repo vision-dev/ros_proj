@@ -1,0 +1,2 @@
+delta_robot:pc_to_plc_sub_py:plc_to_pc_pub_cpp
+-G Unix Makefiles -DCATKIN_DEVEL_PREFIX=/home/student/Asparagus_project/ros_proj/devel_isolated -DCMAKE_INSTALL_PREFIX=/home/student/Asparagus_project/ros_proj/install_isolated

@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "random": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "vector": "cpp",
+        "chrono": "cpp",
+        "array": "cpp",
+        "string_view": "cpp"
+    }
+}
