@@ -636,6 +636,19 @@ rosgraph_msgs_generate_messages_cpp/fast:
 .PHONY : rosgraph_msgs_generate_messages_cpp/fast
 
 #=============================================================================
+# Target rules for targets named plc_pc_comm
+
+# Build rule for target.
+plc_pc_comm: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 plc_pc_comm
+.PHONY : plc_pc_comm
+
+# fast build rule for target.
+plc_pc_comm/fast:
+	$(MAKE) -f beckhoff_comm/CMakeFiles/plc_pc_comm.dir/build.make beckhoff_comm/CMakeFiles/plc_pc_comm.dir/build
+.PHONY : plc_pc_comm/fast
+
+#=============================================================================
 # Target rules for targets named plc_to_pc
 
 # Build rule for target.
@@ -697,6 +710,7 @@ help:
 	@echo "... beckhoff_msgs_generate_messages_cpp"
 	@echo "... beckhoff_msgs_gennodejs"
 	@echo "... rosgraph_msgs_generate_messages_cpp"
+	@echo "... plc_pc_comm"
 	@echo "... plc_to_pc"
 .PHONY : help
 

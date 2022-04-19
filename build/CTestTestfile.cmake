@@ -6,6 +6,7 @@
 # testing this directory and lists subdirectories to be tested as well.
 subdirs("gtest")
 subdirs("beckhoff_msgs")
+subdirs("beckhoff_comm")
 subdirs("delta_robot")
 subdirs("pc_to_plc_sub_py")
 subdirs("plc_to_pc_pub_cpp")

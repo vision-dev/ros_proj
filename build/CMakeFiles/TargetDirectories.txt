@@ -69,6 +69,14 @@
 /home/student/Asparagus_project/ros_proj/build/beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir
 /home/student/Asparagus_project/ros_proj/build/beckhoff_msgs/CMakeFiles/test.dir
 /home/student/Asparagus_project/ros_proj/build/beckhoff_msgs/CMakeFiles/edit_cache.dir
+/home/student/Asparagus_project/ros_proj/build/beckhoff_comm/CMakeFiles/install/strip.dir
+/home/student/Asparagus_project/ros_proj/build/beckhoff_comm/CMakeFiles/install/local.dir
+/home/student/Asparagus_project/ros_proj/build/beckhoff_comm/CMakeFiles/install.dir
+/home/student/Asparagus_project/ros_proj/build/beckhoff_comm/CMakeFiles/list_install_components.dir
+/home/student/Asparagus_project/ros_proj/build/beckhoff_comm/CMakeFiles/rebuild_cache.dir
+/home/student/Asparagus_project/ros_proj/build/beckhoff_comm/CMakeFiles/edit_cache.dir
+/home/student/Asparagus_project/ros_proj/build/beckhoff_comm/CMakeFiles/test.dir
+/home/student/Asparagus_project/ros_proj/build/beckhoff_comm/CMakeFiles/plc_pc_comm.dir
 /home/student/Asparagus_project/ros_proj/build/delta_robot/CMakeFiles/install/strip.dir
 /home/student/Asparagus_project/ros_proj/build/delta_robot/CMakeFiles/install/local.dir
 /home/student/Asparagus_project/ros_proj/build/delta_robot/CMakeFiles/install.dir

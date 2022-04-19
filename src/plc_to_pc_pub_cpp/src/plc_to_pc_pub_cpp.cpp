@@ -135,7 +135,7 @@ void callback_receive_omegas(const beckhoff_msgs::array5& omega){
 	//static float timeStamp = 0;
 	//timeStamp += 0.05;
 	omega_Delta = { omega.data[0], omega.data[1], omega.data[2], omega.data[3], omega.data[4] };
-    std::cout <<" ADS write " << omega.data[0] << '\n';
+    //std::cout <<" ADS write " << omega.data[0] << '\n';
 }
 
 
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
 
     //subscriber
-	ros::Subscriber omega_Delta_sub = nh.subscribe("omegas_delta_sub", 1000, callback_receive_omegas);
+	ros::Subscriber omega_Delta_sub = nh.subscribe("/omegas_delta", 1000, callback_receive_omegas);
 	//ros::Subscriber sub_ESPG = nh.subscribe("/ESPG", 1000, callback_receive_ESPG);
 
     // Publish alphas (angles in degrees) from delta robot joints
