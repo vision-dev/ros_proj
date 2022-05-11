@@ -1,6 +1,9 @@
 file(REMOVE_RECURSE
   "/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/manifest.l"
   "/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/array5.l"
+  "/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/array6.l"
+  "/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/catReceive.l"
+  "/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/catSend.l"
   "CMakeFiles/beckhoff_msgs_generate_messages_eus"
 )
 

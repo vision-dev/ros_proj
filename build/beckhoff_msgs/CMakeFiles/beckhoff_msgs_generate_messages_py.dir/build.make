@@ -54,6 +54,9 @@ CMAKE_BINARY_DIR = /home/student/Asparagus_project/ros_proj/build
 include beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_py.dir/progress.make
 
 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_py: /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_array5.py
+beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_py: /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_array6.py
+beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_py: /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_catReceive.py
+beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_py: /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_catSend.py
 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_py: /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/__init__.py
 
 
@@ -62,13 +65,34 @@ beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_py: /home/student/Aspar
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/student/Asparagus_project/ros_proj/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating Python from MSG beckhoff_msgs/array5"
 	cd /home/student/Asparagus_project/ros_proj/build/beckhoff_msgs && ../catkin_generated/env_cached.sh /home/student/anaconda3/bin/python3 /opt/ros/noetic/share/genpy/cmake/../../../lib/genpy/genmsg_py.py /home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/array5.msg -Ibeckhoff_msgs:/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg -Istd_msgs:/opt/ros/noetic/share/std_msgs/cmake/../msg -p beckhoff_msgs -o /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg
 
+/home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_array6.py: /opt/ros/noetic/lib/genpy/genmsg_py.py
+/home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_array6.py: /home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/array6.msg
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/student/Asparagus_project/ros_proj/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Generating Python from MSG beckhoff_msgs/array6"
+	cd /home/student/Asparagus_project/ros_proj/build/beckhoff_msgs && ../catkin_generated/env_cached.sh /home/student/anaconda3/bin/python3 /opt/ros/noetic/share/genpy/cmake/../../../lib/genpy/genmsg_py.py /home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/array6.msg -Ibeckhoff_msgs:/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg -Istd_msgs:/opt/ros/noetic/share/std_msgs/cmake/../msg -p beckhoff_msgs -o /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg
+
+/home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_catReceive.py: /opt/ros/noetic/lib/genpy/genmsg_py.py
+/home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_catReceive.py: /home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/catReceive.msg
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/student/Asparagus_project/ros_proj/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Generating Python from MSG beckhoff_msgs/catReceive"
+	cd /home/student/Asparagus_project/ros_proj/build/beckhoff_msgs && ../catkin_generated/env_cached.sh /home/student/anaconda3/bin/python3 /opt/ros/noetic/share/genpy/cmake/../../../lib/genpy/genmsg_py.py /home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/catReceive.msg -Ibeckhoff_msgs:/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg -Istd_msgs:/opt/ros/noetic/share/std_msgs/cmake/../msg -p beckhoff_msgs -o /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg
+
+/home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_catSend.py: /opt/ros/noetic/lib/genpy/genmsg_py.py
+/home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_catSend.py: /home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/catSend.msg
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/student/Asparagus_project/ros_proj/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Generating Python from MSG beckhoff_msgs/catSend"
+	cd /home/student/Asparagus_project/ros_proj/build/beckhoff_msgs && ../catkin_generated/env_cached.sh /home/student/anaconda3/bin/python3 /opt/ros/noetic/share/genpy/cmake/../../../lib/genpy/genmsg_py.py /home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/catSend.msg -Ibeckhoff_msgs:/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg -Istd_msgs:/opt/ros/noetic/share/std_msgs/cmake/../msg -p beckhoff_msgs -o /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg
+
 /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/__init__.py: /opt/ros/noetic/lib/genpy/genmsg_py.py
 /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/__init__.py: /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_array5.py
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/student/Asparagus_project/ros_proj/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Generating Python msg __init__.py for beckhoff_msgs"
+/home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/__init__.py: /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_array6.py
+/home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/__init__.py: /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_catReceive.py
+/home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/__init__.py: /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_catSend.py
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/student/Asparagus_project/ros_proj/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Generating Python msg __init__.py for beckhoff_msgs"
 	cd /home/student/Asparagus_project/ros_proj/build/beckhoff_msgs && ../catkin_generated/env_cached.sh /home/student/anaconda3/bin/python3 /opt/ros/noetic/share/genpy/cmake/../../../lib/genpy/genmsg_py.py -o /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg --initpy
 
 beckhoff_msgs_generate_messages_py: beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_py
 beckhoff_msgs_generate_messages_py: /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_array5.py
+beckhoff_msgs_generate_messages_py: /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_array6.py
+beckhoff_msgs_generate_messages_py: /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_catReceive.py
+beckhoff_msgs_generate_messages_py: /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_catSend.py
 beckhoff_msgs_generate_messages_py: /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/__init__.py
 beckhoff_msgs_generate_messages_py: beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_py.dir/build.make
 

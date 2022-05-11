@@ -40,8 +40,8 @@ frame = np.zeros((height, width))
 # User settings:
 
 nodeName = 'keyboard_teleop'
-topicName = 'omegas_control'
-nodeRate = 10	# in Hz
+topicName = '/omegas_control'
+nodeRate = 500	# in Hz
 velocityIncrement = 1	# increment for which to change the velocity
 velocityMax = 100
 

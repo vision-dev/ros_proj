@@ -4,6 +4,10 @@
 #include "std_msgs/Float32.h"
 
 #include "beckhoff_msgs/array5.h"
+#include "beckhoff_msgs/array6.h"
+#include "beckhoff_msgs/catReceive.h"
+#include "beckhoff_msgs/catSend.h"
+
 //#include "std_msgs/MultiArrayDimension.h"
 // Ads libraries
 #include "../AdsLib/AdsLib.h"
@@ -22,12 +26,15 @@ static const char remoteIpV4[] = "192.168.65.174";
 //bhf::ads::SetLocalAddress({192, 168, 65, 146, 1, 1});
 AdsDevice route {remoteIpV4, remoteNetId, AMSPORT_R0_PLC_TC3};
 
-// Define data to send to 
-AdsVariable<std::array<double, 5>> omega_Delta {route, "MAIN.DataExchange.PC_to_PLC.omega_Delta"};
+// Define data to send to delta robot
+AdsVariable<std::array<double, 6>> omega_Delta {route, "MAIN.RobotDataExchange.PC_to_PLC.omega_Delta"};
+// Define data to send to delta robot
+AdsVariable<std::array<double, 3>> cat_send {route, "Odometry.CaterpillarDataExchange.PC_to_PLC.array"};
 
 
 // Define publisher
 ros::Publisher alpha_delta_pub; 
+ros::Publisher caterpillar_pub;
 
 //create odometry to publish
 /*nav_msgs::Odometry createOdom(const double robot_odom[]){
@@ -131,10 +138,39 @@ void alphasCallback(const AmsAddr* pAddr, const AdsNotificationHeader* pNotifica
 }
 
 // Send omegas to PLC
-void callback_receive_omegas(const beckhoff_msgs::array5& omega){
+void callback_receive_omegas(const beckhoff_msgs::array6& omega){
 	//static float timeStamp = 0;
 	//timeStamp += 0.05;
-	omega_Delta = { omega.data[0], omega.data[1], omega.data[2], omega.data[3], omega.data[4] };
+	omega_Delta = { omega.data[0], omega.data[1], omega.data[2], omega.data[3], omega.data[4], omega.data[5] };
+    //std::cout <<" ADS write " << omega.data[0] << '\n';
+}
+
+// Notification callback function - read odometry data
+void catCallback(const AmsAddr* pAddr, const AdsNotificationHeader* pNotification, uint32_t hUser){
+
+	const double* data = reinterpret_cast<const double*>(pNotification + 1);
+    
+    beckhoff_msgs::catReceive catReceive_data;
+	// Read velocity of each caterpillar
+    catReceive_data.v[0] = data[0];
+	catReceive_data.v[1] = data[1];
+	// Read relative velocity of platform
+	catReceive_data.Velocity = data[2];
+	catReceive_data.AngularVel = data[3];
+	// Read positions
+	catReceive_data.X_poz    = data[4];
+	catReceive_data.Y_poz    = data[5];
+	catReceive_data.Th_poz   = data[6];
+	catReceive_data.Th_pozPi = data[7];
+
+	caterpillar_pub.publish(catReceive_data);
+}
+
+// Send data to caterpillars
+void callback_cat_send(const beckhoff_msgs::catSend& data){
+	//static float timeStamp = 0;
+	//timeStamp += 0.05;
+	cat_send = { data.VelX, data.VelRot, data.ResetPoz);
     //std::cout <<" ADS write " << omega.data[0] << '\n';
 }
 
@@ -149,14 +185,21 @@ int main(int argc, char **argv)
 
     //subscriber
 	ros::Subscriber omega_Delta_sub = nh.subscribe("/omegas_delta", 1000, callback_receive_omegas);
+	ros::Subscriber cat_sub = nh.subscribe("/cat_send", 1000, callback_cat_send);
 	//ros::Subscriber sub_ESPG = nh.subscribe("/ESPG", 1000, callback_receive_ESPG);
 
     // Publish alphas (angles in degrees) from delta robot joints
     alpha_delta_pub = nh.advertise<beckhoff_msgs::array5 >("/alpha_delta", 1000);
+	// Publish odometry data from caterpillar
+	caterpillar_pub = nh.advertise<beckhoff_msgs::catReceive >("/cat_receive", 1000);
     
-    //notifications
+    //notifications -> delta robot
 	const AdsNotificationAttrib attrib = { sizeof(double)* 5, ADSTRANS_SERVERCYCLE, 0, { 10000 } };
-	AdsNotification notification{ route, "MAIN.DataExchange.PLC_to_PC.alpha_Delta", attrib, &alphasCallback, 0xBEEFDEAD };
+	AdsNotification notification{ route, "MAIN.RobotDataExchange.PLC_to_PC.alpha_Delta", attrib, &alphasCallback, 0xBEEFDEAD };
+    
+	//notifications -> odometry (caterpillars)
+	const AdsNotificationAttrib attrib1 = { sizeof(double)* 8, ADSTRANS_SERVERCYCLE, 0, { 10000 } };
+	AdsNotification notification1{ route, "Odometry.CaterpillarDataExchange.PLC_to_PC.array", attrib1, &catCallback, 0xBEEFDEAD };
     
 
 	ros::spin();

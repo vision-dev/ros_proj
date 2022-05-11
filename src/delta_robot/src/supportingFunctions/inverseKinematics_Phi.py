@@ -70,16 +70,16 @@ def deltaInverseKin(Px, Py, Pz, phi=0):
 	s_3 = [s_3x, s_3y, s_3z]
 
 	# r_4: (end of 'link 4' = tool segment or position of the tool end relative to platform)
-	r_4x = 28
+	r_4x = 0 #28
 	r_4y = 0
-	r_4z = 0	# for the moment, it's more like: -280
+	r_4z = 280	# for the moment, it's more like: -280
 	r_4 = [r_4x, r_4y, r_4z]
 
 
 
 	# -- angles:	(angles of the motors - 3 motors in 2pi)
-	armAngles = [0, 2*np.pi/3, 2*np.pi*2/3]
-
+	armAngles = [0 + np.pi/4, 2*np.pi/3 + np.pi/4, 2*np.pi*2/3 + np.pi/4]
+	#armAngles = [-2*np.pi/3, 0, 2*np.pi/3]
 
 
 	# ### Function code: ### 

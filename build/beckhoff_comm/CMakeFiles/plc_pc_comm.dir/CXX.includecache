@@ -22,6 +22,22 @@ ros/builtin_message_traits.h
 ros/message_operations.h
 -
 
+/home/student/Asparagus_project/ros_proj/devel/include/beckhoff_msgs/array6.h
+string
+-
+vector
+-
+map
+-
+ros/types.h
+-
+ros/serialization.h
+-
+ros/builtin_message_traits.h
+-
+ros/message_operations.h
+-
+
 /home/student/Asparagus_project/ros_proj/src/beckhoff_comm/AdsLib/AdsDevice.h
 AdsException.h
 /home/student/Asparagus_project/ros_proj/src/beckhoff_comm/AdsLib/AdsException.h
@@ -129,6 +145,8 @@ std_msgs/Float32.h
 /home/student/Asparagus_project/ros_proj/src/beckhoff_comm/src/std_msgs/Float32.h
 beckhoff_msgs/array5.h
 /home/student/Asparagus_project/ros_proj/src/beckhoff_comm/src/beckhoff_msgs/array5.h
+beckhoff_msgs/array6.h
+/home/student/Asparagus_project/ros_proj/src/beckhoff_comm/src/beckhoff_msgs/array6.h
 ../AdsLib/AdsLib.h
 /home/student/Asparagus_project/ros_proj/src/beckhoff_comm/AdsLib/AdsLib.h
 ../AdsLib/AdsVariable.h

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 
 
@@ -45,13 +45,10 @@ from supportingFunctions.minJerkInterpolator import minJerkInterpolator
 width = 512
 height = 512
 
-
-
-
 # User settings:
 
 nodeName = 'moveL_control'
-topicName = 'r_control'
+topicName = '/r_control'
 nodeRate = 500	# in Hz
 dT_ms = int(1000/nodeRate)
 
@@ -64,9 +61,8 @@ print(dT_ms)
 
 # initialize Interpolator:
 maxSpeed = np.array([200, 200, 200, 400, 400])
-interpolator = minJerkInterpolator(maxSpeed=maxSpeed, printAll=False)
-
-	
+#dT_0 = 0.002
+interpolator = minJerkInterpolator(maxSpeed=maxSpeed, dT=0.002, printAll=False)
 
 
 def talker():
@@ -97,13 +93,13 @@ def talker():
 
 
 	preSavedPoints_tuning = np.array([
-		[0,		0, 		-750, 	phi, 	gripperOpenedPosition],
-		[-100,	0, 		-750, 	phi, 	gripperOpenedPosition],
-		[100,	0,	 	-750, 	phi, 	gripperOpenedPosition],
-		[0,	0,	 		-750, 	phi,	gripperOpenedPosition],
-		[0,	0,	 		-750, 	120, 	gripperOpenedPosition],
-		[-0,	0,		-750, 	phi, 	gripperOpenedPosition],
-		[-0,	0,		-750, 	phi, 	gripperClosedPosition],
+		[0,		0, 		-700, 	phi, 	gripperOpenedPosition],
+		[-100,	0, 		-700, 	phi, 	gripperOpenedPosition],
+		[100,	0,	 	-700, 	phi, 	gripperOpenedPosition],
+		[0,	-100,		-700, 	phi,	gripperOpenedPosition],
+		[0,	100, 		-700, 	120, 	gripperOpenedPosition],
+		[-0,	0,		-700, 	phi, 	gripperOpenedPosition],
+		[-0,	0,		-700, 	phi, 	gripperClosedPosition],
 	])
 
 
@@ -175,7 +171,7 @@ def talker():
 			break
 		elif 48 <= pressedKey < 48 + 9:               # key 
 			pressedNum = pressedKey - 48
-			print('number:', pressedKey)
+			print('number:', pressedNum)
 			if pressedNum <= preSavedPoints.shape[0]:
 				lastPoint = np.copy(preSavedPoints[pressedNum])
 				# if gripperClosed:
