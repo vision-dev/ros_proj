@@ -37,7 +37,7 @@ height = 512
 
 nodeName = 'moveL_control'
 topicName = '/r_control'
-nodeRate = 500	# in Hz
+nodeRate = 1000	# in Hz
 dT_ms = int(1000/nodeRate)
 
 #print(dT_ms)
@@ -49,7 +49,7 @@ dT_ms = int(1000/nodeRate)
 
 # initialize Interpolator:
 maxSpeed = np.array([200, 200, 200, 200, 100])
-interpolator = minJerkInterpolator(maxSpeed=maxSpeed, dT=0.002, printAll=False)
+interpolator = minJerkInterpolator(maxSpeed=maxSpeed, dT=0.001, printAll=False)
 
 	
 def talker():

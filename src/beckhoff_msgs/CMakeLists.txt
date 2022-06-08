@@ -54,6 +54,7 @@ find_package(catkin REQUIRED COMPONENTS
    array6.msg
    catReceive.msg
    catSend.msg
+   dataArray.msg
  )
 
 ## Generate services in the 'srv' folder

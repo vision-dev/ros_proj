@@ -9,5 +9,7 @@
    "CATRECEIVE"
    "<CATSEND>"
    "CATSEND"
+   "<DATAARRAY>"
+   "DATAARRAY"
   ))
 

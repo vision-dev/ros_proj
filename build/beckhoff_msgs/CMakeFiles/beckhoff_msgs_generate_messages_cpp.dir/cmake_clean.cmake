@@ -3,6 +3,7 @@ file(REMOVE_RECURSE
   "/home/student/Asparagus_project/ros_proj/devel/include/beckhoff_msgs/array6.h"
   "/home/student/Asparagus_project/ros_proj/devel/include/beckhoff_msgs/catReceive.h"
   "/home/student/Asparagus_project/ros_proj/devel/include/beckhoff_msgs/catSend.h"
+  "/home/student/Asparagus_project/ros_proj/devel/include/beckhoff_msgs/dataArray.h"
   "CMakeFiles/beckhoff_msgs_generate_messages_cpp"
 )
 

@@ -12,4 +12,6 @@
     (:file "_package_catReceive" :depends-on ("_package"))
     (:file "catSend" :depends-on ("_package_catSend"))
     (:file "_package_catSend" :depends-on ("_package"))
+    (:file "dataArray" :depends-on ("_package_dataArray"))
+    (:file "_package_dataArray" :depends-on ("_package"))
   ))

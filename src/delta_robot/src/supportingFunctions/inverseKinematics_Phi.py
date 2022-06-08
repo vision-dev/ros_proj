@@ -93,8 +93,8 @@ def deltaInverseKin(Px, Py, Pz, phi=0):
 	phi_Rad = np.pi/180*phi
 	phi_G = np.pi - phi_Rad
 
-	print(phi_G)
-	print('r_4x*np.cos(phi_G)')
+	#print(phi_G)
+	#print('r_4x*np.cos(phi_G)')
 
 	Tx = Px + r_4x*np.cos(phi_G)
 	Ty = Py + r_4x*np.sin(phi_G)

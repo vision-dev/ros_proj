@@ -1,6 +1,6 @@
 # generated from genmsg/cmake/pkg-genmsg.context.in
 
-messages_str = "/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/array5.msg;/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/array6.msg;/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/catReceive.msg;/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/catSend.msg"
+messages_str = "/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/array5.msg;/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/array6.msg;/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/catReceive.msg;/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/catSend.msg;/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/dataArray.msg"
 services_str = ""
 pkg_name = "beckhoff_msgs"
 dependencies_str = "std_msgs"

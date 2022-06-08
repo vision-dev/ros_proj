@@ -57,6 +57,7 @@ beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_eus: /home/student/Aspa
 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_eus: /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/array6.l
 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_eus: /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/catReceive.l
 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_eus: /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/catSend.l
+beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_eus: /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/dataArray.l
 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_eus: /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/manifest.l
 
 
@@ -80,8 +81,13 @@ beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_eus: /home/student/Aspa
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/student/Asparagus_project/ros_proj/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Generating EusLisp code from beckhoff_msgs/catSend.msg"
 	cd /home/student/Asparagus_project/ros_proj/build/beckhoff_msgs && ../catkin_generated/env_cached.sh /home/student/anaconda3/bin/python3 /opt/ros/noetic/share/geneus/cmake/../../../lib/geneus/gen_eus.py /home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/catSend.msg -Ibeckhoff_msgs:/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg -Istd_msgs:/opt/ros/noetic/share/std_msgs/cmake/../msg -p beckhoff_msgs -o /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg
 
+/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/dataArray.l: /opt/ros/noetic/lib/geneus/gen_eus.py
+/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/dataArray.l: /home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/dataArray.msg
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/student/Asparagus_project/ros_proj/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Generating EusLisp code from beckhoff_msgs/dataArray.msg"
+	cd /home/student/Asparagus_project/ros_proj/build/beckhoff_msgs && ../catkin_generated/env_cached.sh /home/student/anaconda3/bin/python3 /opt/ros/noetic/share/geneus/cmake/../../../lib/geneus/gen_eus.py /home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/dataArray.msg -Ibeckhoff_msgs:/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg -Istd_msgs:/opt/ros/noetic/share/std_msgs/cmake/../msg -p beckhoff_msgs -o /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg
+
 /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/manifest.l: /opt/ros/noetic/lib/geneus/gen_eus.py
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/student/Asparagus_project/ros_proj/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Generating EusLisp manifest code for beckhoff_msgs"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/student/Asparagus_project/ros_proj/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Generating EusLisp manifest code for beckhoff_msgs"
 	cd /home/student/Asparagus_project/ros_proj/build/beckhoff_msgs && ../catkin_generated/env_cached.sh /home/student/anaconda3/bin/python3 /opt/ros/noetic/share/geneus/cmake/../../../lib/geneus/gen_eus.py -m -o /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs beckhoff_msgs std_msgs
 
 beckhoff_msgs_generate_messages_eus: beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_eus
@@ -89,6 +95,7 @@ beckhoff_msgs_generate_messages_eus: /home/student/Asparagus_project/ros_proj/de
 beckhoff_msgs_generate_messages_eus: /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/array6.l
 beckhoff_msgs_generate_messages_eus: /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/catReceive.l
 beckhoff_msgs_generate_messages_eus: /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/catSend.l
+beckhoff_msgs_generate_messages_eus: /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/dataArray.l
 beckhoff_msgs_generate_messages_eus: /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/manifest.l
 beckhoff_msgs_generate_messages_eus: beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_eus.dir/build.make
 

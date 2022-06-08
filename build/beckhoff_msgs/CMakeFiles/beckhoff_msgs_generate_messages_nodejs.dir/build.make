@@ -57,6 +57,7 @@ beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs: /home/student/A
 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs: /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/array6.js
 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs: /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/catReceive.js
 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs: /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/catSend.js
+beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs: /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/dataArray.js
 
 
 /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/array5.js: /opt/ros/noetic/lib/gennodejs/gen_nodejs.py
@@ -79,11 +80,17 @@ beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs: /home/student/A
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/student/Asparagus_project/ros_proj/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Generating Javascript code from beckhoff_msgs/catSend.msg"
 	cd /home/student/Asparagus_project/ros_proj/build/beckhoff_msgs && ../catkin_generated/env_cached.sh /home/student/anaconda3/bin/python3 /opt/ros/noetic/share/gennodejs/cmake/../../../lib/gennodejs/gen_nodejs.py /home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/catSend.msg -Ibeckhoff_msgs:/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg -Istd_msgs:/opt/ros/noetic/share/std_msgs/cmake/../msg -p beckhoff_msgs -o /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg
 
+/home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/dataArray.js: /opt/ros/noetic/lib/gennodejs/gen_nodejs.py
+/home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/dataArray.js: /home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/dataArray.msg
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/student/Asparagus_project/ros_proj/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Generating Javascript code from beckhoff_msgs/dataArray.msg"
+	cd /home/student/Asparagus_project/ros_proj/build/beckhoff_msgs && ../catkin_generated/env_cached.sh /home/student/anaconda3/bin/python3 /opt/ros/noetic/share/gennodejs/cmake/../../../lib/gennodejs/gen_nodejs.py /home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg/dataArray.msg -Ibeckhoff_msgs:/home/student/Asparagus_project/ros_proj/src/beckhoff_msgs/msg -Istd_msgs:/opt/ros/noetic/share/std_msgs/cmake/../msg -p beckhoff_msgs -o /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg
+
 beckhoff_msgs_generate_messages_nodejs: beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs
 beckhoff_msgs_generate_messages_nodejs: /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/array5.js
 beckhoff_msgs_generate_messages_nodejs: /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/array6.js
 beckhoff_msgs_generate_messages_nodejs: /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/catReceive.js
 beckhoff_msgs_generate_messages_nodejs: /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/catSend.js
+beckhoff_msgs_generate_messages_nodejs: /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/dataArray.js
 beckhoff_msgs_generate_messages_nodejs: beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs.dir/build.make
 
 .PHONY : beckhoff_msgs_generate_messages_nodejs

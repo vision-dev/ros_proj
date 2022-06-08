@@ -3,6 +3,7 @@
 84e18adee0912c177a955566b0424ee4 /home/student/Asparagus_project/ros_proj/devel/include/beckhoff_msgs/array6.h
 fcfcfa7d2b5db36650c3c9e9a5b341a6 /home/student/Asparagus_project/ros_proj/devel/include/beckhoff_msgs/catReceive.h
 96c1edf790e0dc8dedbe9234091879c9 /home/student/Asparagus_project/ros_proj/devel/include/beckhoff_msgs/catSend.h
+cf995ea32a0fd95604b7faa340973189 /home/student/Asparagus_project/ros_proj/devel/include/beckhoff_msgs/dataArray.h
 0c7ec09984e429629ec51643bf745ed9 /home/student/Asparagus_project/ros_proj/devel/include/beckhoff_msgs/double5.h
 55c3260e644f18c3e70a6ca755153c32 /home/student/Asparagus_project/ros_proj/devel/include/pc_to_plc_sub_py/double5.h
 55292b0ddbdc611f5f77c5d96776ed6e /home/student/Asparagus_project/ros_proj/devel/include/plc_to_pc_pub_cpp/double5.h
@@ -11,6 +12,7 @@ fcfcfa7d2b5db36650c3c9e9a5b341a6 /home/student/Asparagus_project/ros_proj/devel/
 90ea31a8d0766b24fe48d71d9b6156b9 /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_array6.py
 89ee53dd740cf492dd7365cbce1cc716 /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_catReceive.py
 fcd3d0a2a693d18eff6d6b652e9269f1 /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_catSend.py
+c9b6a12da6599d8dc6ae632d205eb5e6 /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_dataArray.py
 72963ef2cdc622b0762f1a0490aebbea /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_double5.py
 60ce44eed2aeb47f44fc1ca99546b001 /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/pc_to_plc_sub_py/msg/__init__.py
 fb59128ff216e43f34c639f7b4997d2e /home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/pc_to_plc_sub_py/msg/_double5.py
@@ -20,6 +22,7 @@ f324257bb32156d656e450124a9b1f4b /home/student/Asparagus_project/ros_proj/devel/
 2d805d06508980126d791b8a812ab083 /home/student/Asparagus_project/ros_proj/devel/share/common-lisp/ros/beckhoff_msgs/msg/array6.lisp
 5ff40761b4b2723dbb70acf527d6ddd6 /home/student/Asparagus_project/ros_proj/devel/share/common-lisp/ros/beckhoff_msgs/msg/catReceive.lisp
 426757861d9c61505ee03a4f19cba258 /home/student/Asparagus_project/ros_proj/devel/share/common-lisp/ros/beckhoff_msgs/msg/catSend.lisp
+5b78ab03c1878239b245eefbeb59ec02 /home/student/Asparagus_project/ros_proj/devel/share/common-lisp/ros/beckhoff_msgs/msg/dataArray.lisp
 1c417558f94450d03471e89990e1a771 /home/student/Asparagus_project/ros_proj/devel/share/common-lisp/ros/beckhoff_msgs/msg/double5.lisp
 804e830ef87acf52e7f802ccd512dde1 /home/student/Asparagus_project/ros_proj/devel/share/common-lisp/ros/pc_to_plc_sub_py/msg/double5.lisp
 2cb59ca22de6e033c30f5cada84b9fbb /home/student/Asparagus_project/ros_proj/devel/share/common-lisp/ros/plc_to_pc_pub_cpp/msg/double5.lisp
@@ -27,6 +30,7 @@ f324257bb32156d656e450124a9b1f4b /home/student/Asparagus_project/ros_proj/devel/
 de95242e8a9ae7e4a7e8cf3c66ae068d /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/array6.js
 6d90cbd3a6ccf0f0f821024ff49c45cc /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/catReceive.js
 cb584e0f2185df03f1b7e5dd4afc62c7 /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/catSend.js
+eb44d77afd793960740ae04d40dc9d8b /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/dataArray.js
 b8da12645c089271871db370475356a5 /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/double5.js
 8affb562c607d11c96512267e498930e /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/pc_to_plc_sub_py/msg/double5.js
 909a876791205ed1f44451ddd17bc4b5 /home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/plc_to_pc_pub_cpp/msg/double5.js
@@ -35,6 +39,7 @@ b8da12645c089271871db370475356a5 /home/student/Asparagus_project/ros_proj/devel/
 51ca95f2cb5c3c021aef6bdf2b865ac3 /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/array6.l
 ed134c6bf8f359775643f3a4086cd593 /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/catReceive.l
 826f358aaa0e71b75ebacb8119519269 /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/catSend.l
+c42cf4a010fdb87e44995b4b7d754039 /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/dataArray.l
 b631b0da26118aa2a40d9f6e5dcd2454 /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/double5.l
 8be810e54ea0a8e6b992609400133dc9 /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/pc_to_plc_sub_py/manifest.l
 2b0e088eeda5431820213629f1e85599 /home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/pc_to_plc_sub_py/msg/double5.l
@@ -45,6 +50,7 @@ b6ae566fc9dbd6fa5107d7441b7ef187 beckhoff_msgs/CMakeFiles/_beckhoff_msgs_generat
 c0a2817c381337324d2bb00fc65fe03d beckhoff_msgs/CMakeFiles/_beckhoff_msgs_generate_messages_check_deps_array6
 4369af3cec568afa829275e8d0a28850 beckhoff_msgs/CMakeFiles/_beckhoff_msgs_generate_messages_check_deps_catReceive
 d262b37bc598fc9ab621bb352f92b79b beckhoff_msgs/CMakeFiles/_beckhoff_msgs_generate_messages_check_deps_catSend
+7fa59701dbc5cc6302d7590ed2236bda beckhoff_msgs/CMakeFiles/_beckhoff_msgs_generate_messages_check_deps_dataArray
 e45875f03212662e46f6d127ac5e34b6 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_cpp
 e45875f03212662e46f6d127ac5e34b6 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_eus
 e45875f03212662e46f6d127ac5e34b6 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_lisp
