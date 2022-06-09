@@ -30,37 +30,37 @@
   (:serialization-length
    ()
    (+
-    ;; float64[20] _data
-    (* 8    20)
+    ;; float32[20] _data
+    (* 4    20)
     ))
   (:serialize
    (&optional strm)
    (let ((s (if strm strm
               (make-string-output-stream (send self :serialization-length)))))
-     ;; float64[20] _data
+     ;; float32[20] _data
      (dotimes (i 20)
-       (sys::poke (elt _data i) (send s :buffer) (send s :count) :double) (incf (stream-count s) 8)
+       (sys::poke (elt _data i) (send s :buffer) (send s :count) :float) (incf (stream-count s) 4)
        )
      ;;
      (if (null strm) (get-output-stream-string s))))
   (:deserialize
    (buf &optional (ptr- 0))
-   ;; float64[20] _data
+   ;; float32[20] _data
    (dotimes (i (length _data))
-     (setf (elt _data i) (sys::peek buf ptr- :double)) (incf ptr- 8)
+     (setf (elt _data i) (sys::peek buf ptr- :float)) (incf ptr- 4)
      )
    ;;
    self)
   )
 
-(setf (get beckhoff_msgs::dataArray :md5sum-) "c56fc869e3a3f36debd8a653b1ddb834")
+(setf (get beckhoff_msgs::dataArray :md5sum-) "863ff43db2ffc1168b53b76ab57ce6a3")
 (setf (get beckhoff_msgs::dataArray :datatype-) "beckhoff_msgs/dataArray")
 (setf (get beckhoff_msgs::dataArray :definition-)
-      "float64[20] data
+      "float32[20] data
 ")
 
 
 
-(provide :beckhoff_msgs/dataArray "c56fc869e3a3f36debd8a653b1ddb834")
+(provide :beckhoff_msgs/dataArray "863ff43db2ffc1168b53b76ab57ce6a3")
 
 

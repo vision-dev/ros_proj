@@ -1,10 +1,14 @@
 (cl:defpackage beckhoff_msgs-msg
   (:use )
   (:export
+   "<CMDROBOT>"
+   "CMDROBOT"
+   "<JOINTSTATEROBOT>"
+   "JOINTSTATEROBOT"
+   "<VECTOR_Q5>"
+   "VECTOR_Q5"
    "<ARRAY5>"
    "ARRAY5"
-   "<ARRAY6>"
-   "ARRAY6"
    "<CATRECEIVE>"
    "CATRECEIVE"
    "<CATSEND>"

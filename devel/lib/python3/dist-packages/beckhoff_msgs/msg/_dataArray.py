@@ -8,12 +8,12 @@ import struct
 
 
 class dataArray(genpy.Message):
-  _md5sum = "c56fc869e3a3f36debd8a653b1ddb834"
+  _md5sum = "863ff43db2ffc1168b53b76ab57ce6a3"
   _type = "beckhoff_msgs/dataArray"
   _has_header = False  # flag to mark the presence of a Header object
-  _full_text = """float64[20] data"""
+  _full_text = """float32[20] data"""
   __slots__ = ['data']
-  _slot_types = ['float64[20]']
+  _slot_types = ['float32[20]']
 
   def __init__(self, *args, **kwds):
     """
@@ -49,7 +49,7 @@ class dataArray(genpy.Message):
     :param buff: buffer, ``StringIO``
     """
     try:
-      buff.write(_get_struct_20d().pack(*self.data))
+      buff.write(_get_struct_20f().pack(*self.data))
     except struct.error as se: self._check_types(struct.error("%s: '%s' when writing '%s'" % (type(se), str(se), str(locals().get('_x', self)))))
     except TypeError as te: self._check_types(ValueError("%s: '%s' when writing '%s'" % (type(te), str(te), str(locals().get('_x', self)))))
 
@@ -63,8 +63,8 @@ class dataArray(genpy.Message):
     try:
       end = 0
       start = end
-      end += 160
-      self.data = _get_struct_20d().unpack(str[start:end])
+      end += 80
+      self.data = _get_struct_20f().unpack(str[start:end])
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e)  # most likely buffer underfill
@@ -92,8 +92,8 @@ class dataArray(genpy.Message):
     try:
       end = 0
       start = end
-      end += 160
-      self.data = numpy.frombuffer(str[start:end], dtype=numpy.float64, count=20)
+      end += 80
+      self.data = numpy.frombuffer(str[start:end], dtype=numpy.float32, count=20)
       return self
     except struct.error as e:
       raise genpy.DeserializationError(e)  # most likely buffer underfill
@@ -102,9 +102,9 @@ _struct_I = genpy.struct_I
 def _get_struct_I():
     global _struct_I
     return _struct_I
-_struct_20d = None
-def _get_struct_20d():
-    global _struct_20d
-    if _struct_20d is None:
-        _struct_20d = struct.Struct("<20d")
-    return _struct_20d
+_struct_20f = None
+def _get_struct_20f():
+    global _struct_20f
+    if _struct_20f is None:
+        _struct_20f = struct.Struct("<20f")
+    return _struct_20f

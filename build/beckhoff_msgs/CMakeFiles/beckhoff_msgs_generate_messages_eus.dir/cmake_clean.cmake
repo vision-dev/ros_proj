@@ -1,7 +1,9 @@
 file(REMOVE_RECURSE
   "/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/manifest.l"
+  "/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/CmdRobot.l"
+  "/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/JointStateRobot.l"
+  "/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/Vector_q5.l"
   "/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/array5.l"
-  "/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/array6.l"
   "/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/catReceive.l"
   "/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/catSend.l"
   "/home/student/Asparagus_project/ros_proj/devel/share/roseus/ros/beckhoff_msgs/msg/dataArray.l"

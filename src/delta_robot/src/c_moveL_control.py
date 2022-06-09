@@ -124,7 +124,7 @@ def talker():
 	gripperClosed = True
 	pressedNum = 0
 
-	pub = rospy.Publisher(topicName, numpy_msg(Floats),queue_size=10)
+	pub = rospy.Publisher(topicName, numpy_msg(Floats),queue_size=1)
 	rospy.init_node(nodeName)
 	
 

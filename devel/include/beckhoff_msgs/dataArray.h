@@ -35,7 +35,7 @@ struct dataArray_
 
 
 
-   typedef boost::array<double, 20>  _data_type;
+   typedef boost::array<float, 20>  _data_type;
   _data_type data;
 
 
@@ -124,12 +124,12 @@ struct MD5Sum< ::beckhoff_msgs::dataArray_<ContainerAllocator> >
 {
   static const char* value()
   {
-    return "c56fc869e3a3f36debd8a653b1ddb834";
+    return "863ff43db2ffc1168b53b76ab57ce6a3";
   }
 
   static const char* value(const ::beckhoff_msgs::dataArray_<ContainerAllocator>&) { return value(); }
-  static const uint64_t static_value1 = 0xc56fc869e3a3f36dULL;
-  static const uint64_t static_value2 = 0xebd8a653b1ddb834ULL;
+  static const uint64_t static_value1 = 0x863ff43db2ffc116ULL;
+  static const uint64_t static_value2 = 0x8b53b76ab57ce6a3ULL;
 };
 
 template<class ContainerAllocator>
@@ -148,7 +148,7 @@ struct Definition< ::beckhoff_msgs::dataArray_<ContainerAllocator> >
 {
   static const char* value()
   {
-    return "float64[20] data\n"
+    return "float32[20] data\n"
 ;
   }
 
@@ -190,7 +190,7 @@ struct Printer< ::beckhoff_msgs::dataArray_<ContainerAllocator> >
     for (size_t i = 0; i < v.data.size(); ++i)
     {
       s << indent << "  data[" << i << "]: ";
-      Printer<double>::stream(s, indent + "  ", v.data[i]);
+      Printer<float>::stream(s, indent + "  ", v.data[i]);
     }
   }
 };

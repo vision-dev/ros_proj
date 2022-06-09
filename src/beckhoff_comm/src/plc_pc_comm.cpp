@@ -1,8 +1,17 @@
 // Ros libraries
 #include "ros/ros.h"
-#include "std_msgs/Float32MultiArray.h"
-#include "std_msgs/Float32.h"
 
+// Include msg to communicate with caterpillars
+#include "geometry_msgs/TwistStamped.h"
+
+// Include msg to communicate with robot
+#include "beckhoff_msgs/CmdRobot.h"
+#include "beckhoff_msgs/JointStateRobot.h"
+
+#include "std_msgs/Float32.h"
+#include "rospy_tutorials/Floats.h"
+
+// Raw message for sending to PLC
 #include "beckhoff_msgs/dataArray.h"
 
 //#include "std_msgs/MultiArrayDimension.h"
@@ -14,6 +23,7 @@
 #include <array>
 #include <iostream>
 #include <iomanip>
+#include <math.h>
 
 
 // Create route to the PLC
@@ -24,128 +34,58 @@ static const char remoteIpV4[] = "192.168.65.220";
 AdsDevice route {remoteIpV4, remoteNetId, AMSPORT_R0_PLC_TC3};
 
 // Define data to send to delta robot
-AdsVariable<std::array<double, 20>> delta_to_plc {route, "MAIN.RobotDataExchange.PC_to_PLC.dataArray"};
-// Define data to send to delta robot
-//AdsVariable<std::array<double, 20>> cat_to_plc {route, "Odometry.CaterpillarDataExchange.PC_to_PLC.dataArray"};
-
+AdsVariable<std::array<float, 20>> delta_to_plc {route, "MAIN.RobotDataExchange.PC_to_PLC.dataArray"};
 
 // Define publisher
-ros::Publisher delta_pub; 
-//ros::Publisher caterpillar_pub;
-
-//create odometry to publish
-/*nav_msgs::Odometry createOdom(const double robot_odom[]){
-
-	static uint32_t  seq = 0;
-	nav_msgs::Odometry odom;
-
-	//header
-	std_msgs::Header header;
-	header.seq = seq;
-	int64_t s = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-	int64_t ns = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count() - s * 1000000000;
-	header.stamp.sec = s;
-	header.stamp.nsec = ns;
-	header.frame_id = "odom";
-	odom.header = header;
-
-
-	//frame_id
-	odom.child_frame_id = "base_link";
-
-
-	//pose
-	geometry_msgs::PoseWithCovariance poseWC;
-	geometry_msgs::Pose pose;
-
-	geometry_msgs::Point position;
-	position.x = robot_odom[0];
-	position.y = robot_odom[1];
-	position.z = 0;
-	pose.position = position;
-
-	geometry_msgs::Quaternion orientation;
-	orientation.x = 0;
-	orientation.y = 0;
-	orientation.z = -1 * sin(robot_odom[2] / 2);
-	orientation.w = cos(robot_odom[2] / 2);
-	pose.orientation = orientation;
-	poseWC.pose = pose;
-
-	poseWC.covariance = { 0.003, 0, 0, 0, 0, 0,
-		0, 0.003, 0, 0, 0, 0,
-		0, 0, 0.003, 0, 0, 0,
-		0, 0, 0, 0.003, 0, 0,
-		0, 0, 0, 0, 0.003, 0,
-		0, 0, 0, 0, 0, 0.003 };
-
-	odom.pose = poseWC;
-
-
-	//twist
-	geometry_msgs::TwistWithCovariance twistWC;
-	geometry_msgs::Twist twist;
-
-	geometry_msgs::Vector3 linear;
-	linear.x = robot_odom[3];
-	linear.y = robot_odom[4];
-	linear.z = 0;
-	twist.linear = linear;
-
-	geometry_msgs::Vector3 angular;
-	angular.x = 0;
-	angular.y = 0;
-	angular.z = robot_odom[5];
-	twist.angular = angular;
-
-	twistWC.twist = twist;
-
-	twistWC.covariance = { 0.01, 0, 0, 0, 0, 0,
-		0, 0.01, 0, 0, 0, 0,
-		0, 0, 0.01, 0, 0, 0,
-		0, 0, 0, 0.01, 0, 0,
-		0, 0, 0, 0, 0.01, 0,
-		0, 0, 0, 0, 0, 0.01 };
-
-	odom.twist = twistWC;
-	if ((seq++)>4294967294){ seq = 0; }
-
-	return odom;
-}*/
-
-
-//notification callback function - odometry create and publish on topic
-/*void odometryCallback(const AmsAddr* pAddr, const AdsNotificationHeader* pNotification, uint32_t hUser){
-
-	const double* data = reinterpret_cast<const double*>(pNotification + 1);
-	nav_msgs::Odometry odom = createOdom(data);
-	pub_odom.publish(odom);
-}*/
-
+ros::Publisher alphas_pub; 
 
 // Notification callback function - read alphas from PLC and publish on topic
 void callback_delta_from_plc(const AmsAddr* pAddr, const AdsNotificationHeader* pNotification, uint32_t hUser){
 
-	const double* data = reinterpret_cast<const double*>(pNotification + 1);
+	const float* data = reinterpret_cast<const float*>(pNotification + 1);
     
+	// Read raw data from PLC
     beckhoff_msgs::dataArray delta_receive;
-	// Read 5 position from motor encoders
-    delta_receive.data = {data[0],data[1],data[2],data[3],data[4]};
+	// Timestamp, 5 position from motor encoders
+    delta_receive.data = { data[0], data[1], data[2], data[3], data[4],
+						data[5], data[6], data[7], data[8], data[9],
+						data[10], data[11], data[12], data[13], data[14],
+						data[15], data[16], data[17], data[18], data[19] };
 
-	//std::cout <<" ADS read " << data[0] << '\n';
+	// Read timestamp
+	beckhoff_msgs::JointStateRobot RobotJointState;
+	// Read actual positions
 
-	delta_pub.publish(delta_receive);
+	int32_t now_sec = int(floor(delta_receive.data[0]*0.001));
+	int32_t now_nsec = int(delta_receive.data[0]*0.001*1e9)% int(1e9) ;
+	RobotJointState.Timestamp.sec = now_sec;
+	RobotJointState.Timestamp.nsec = now_nsec;
+	RobotJointState.qq.j0 = delta_receive.data[1];
+	RobotJointState.qq.j1 = delta_receive.data[2];
+	RobotJointState.qq.j2 = delta_receive.data[3];
+	RobotJointState.qq.j3 = delta_receive.data[4];
+	RobotJointState.qq.j4 = delta_receive.data[5];
+	// Read actual velocities
+	RobotJointState.dq.j0 = delta_receive.data[6];
+	RobotJointState.dq.j1 = delta_receive.data[7];
+	RobotJointState.dq.j2 = delta_receive.data[8];
+	RobotJointState.dq.j3 = delta_receive.data[9];
+	RobotJointState.dq.j4 = delta_receive.data[10];
+
+	std::cout <<" ADS read " << RobotJointState.Timestamp << '\n';
+
+	alphas_pub.publish(RobotJointState);
 }
 
 // Send omegas to PLC
-void callback_delta_to_plc(const beckhoff_msgs::dataArray& data){
+void callback_delta_to_plc(const beckhoff_msgs::CmdRobot& data){
 	
-	// Send omegas[0..4], timestamp to PLC
-	delta_to_plc = { data.data[0], data.data[1], data.data[2], data.data[3], data.data[4], data.data[5],0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+	// Timestamp, omegas to PLC
+	float now_time = float(data.Timestamp.sec) + float(data.Timestamp.nsec) / 10e-9;
+	delta_to_plc = {now_time, data.dq.j0, data.dq.j1, data.dq.j2, data.dq.j3, data.dq.j4,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	//delta_to_plc = { 0, 0.0, 0, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
-	std::cout <<" ADS write " << data.data[0] << '\n';
-
-    
+	std::cout <<" ADS write " << now_time << '\n';
 }
 
 // Notification callback function - read odometry data
@@ -187,17 +127,13 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
 
     //subscriber
-	ros::Subscriber delta_sub = nh.subscribe("/delta_to_plc", 1000, callback_delta_to_plc);
-	//ros::Subscriber cat_sub = nh.subscribe("/cat_to_plc", 1000, callback_cat_to_plc);
-	//ros::Subscriber sub_ESPG = nh.subscribe("/ESPG", 1000, callback_receive_ESPG);
-
+	ros::Subscriber omegas_sub = nh.subscribe("/robot/cmd", 1, callback_delta_to_plc);
+	
     // Publish alphas (angles in degrees) from delta robot joints
-    delta_pub = nh.advertise<beckhoff_msgs::dataArray >("/delta_from_plc", 1000);
-	// Publish odometry data from caterpillar
-	//caterpillar_pub = nh.advertise<beckhoff_msgs::dataArray >("/cat_from_plc", 1000);
+    alphas_pub = nh.advertise<beckhoff_msgs::JointStateRobot >("/robot/joint_state", 1);
     
     //notifications -> delta robot
-	const AdsNotificationAttrib attrib = { sizeof(double)* 20, ADSTRANS_SERVERCYCLE, 0, { 10000 } };
+	const AdsNotificationAttrib attrib = { sizeof(float)* 20, ADSTRANS_SERVERCYCLE, 0, { 10000 } };
 	AdsNotification notification{ route, "MAIN.RobotDataExchange.PLC_to_PC.dataArray", attrib, &callback_delta_from_plc, 0xBEEFDEAD };
     
 	//notifications -> odometry (caterpillars)

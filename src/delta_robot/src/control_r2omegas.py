@@ -2,15 +2,17 @@
 from ast import If
 from pickle import TRUE
 import rospy
-#from std_msgs.msg import String
-#from beckhoff_msgs.msg import array5
-#from beckhoff_msgs.msg import array6
-from beckhoff_msgs.msg import dataArray
+
+# Include msg to communicate with robot
+from beckhoff_msgs.msg import CmdRobot
+from beckhoff_msgs.msg import JointStateRobot
 
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 import numpy as np
 import time
+import math
+from std_msgs.msg import Float32
 
 from supportingFunctions.inverseKinematics_Phi import deltaInverseKin
 
@@ -21,7 +23,9 @@ class omegas_control:
 		self.maxOmegas = np.asarray(maxOmegas)
 		self.displayResult = displayResult
 
+		self.dt    = 0.0
 		self.e_old = 0.0
+		self.Timestamp_old = 0
 
 		# Define node and topics
 		# Names
@@ -29,107 +33,152 @@ class omegas_control:
 		# Subscribing to topic
 		self.topicName_r_control = '/r_control' # Calculate trajectory of delta robot
 		# Subscribing to topic
-		self.topicName_delta_from_plc = '/delta_from_plc' # Angles from servo and DC motors -> We get them from beckhoff PLC over ADS communication
+		self.topicName_delta_from_plc = '/robot/joint_state' # Angles from servo and DC motors -> We get them from beckhoff PLC over ADS communication
 		# Publishing topics 
-		self.topicName_delta_to_plc = '/delta_to_plc' # Sending motor velocities to PLC
+		self.topicName_delta_to_plc = '/robot/cmd' # Sending motor velocities to PLC
 
-	def pretty_np(self, preprintString, numpyArray, nDecimals=2):
+		rospy.init_node(self.nodeName, anonymous=False)
+
+		rospy.Subscriber(self.topicName_r_control, Floats, self.callback_readReference)
+		rospy.Subscriber(self.topicName_delta_from_plc, JointStateRobot, self.callback_control)
+
+		self.stevec = 0
+
+	def pretty_np(self, preprintString, numpyArray, nDecimals=4):
 		displayPrint = preprintString
 		for number in numpyArray:
 			displayPrint += '	{num:.0{prec}f}'.format(num=number, prec=nDecimals)
 		return displayPrint
 
 	def callback_readReference(self, data):
-		#self.r_control = np.asarray(data.data[:4])
-		#print(self.r_control)
-		#self.r_time = data.data[5]
-
 		self.r_control = data.data
 
 		self.start_time = time.time()
+		#print(self.r_control)
 
 		return
 
 	def callback_control(self, data):
-		# Check if we received new data from /r_control topic
-		#if self.r_time != r_time_old:
-		newData_flag = True
-
-		#print(data.data[:5])
-
-		#r_time_old = self.r_time
+		# Check if we received new data from PLC
+		#print(f"timestamp {repr(data)}")
+		if data.Timestamp != self.Timestamp_old:
+			newData_flag = True
 
 		if newData_flag:
 			newData_flag = False
+			#dt = (data.Timestamp - self.Timestamp_old)
+			#print("delta stevec: " + str(dt))
+			self.Timestamp_old = data.Timestamp
+
 			# Read actual angles
-			self.alphas_actual = data.data[:5]
+			self.qq = [data.qq.j0, data.qq.j1, data.qq.j2, data.qq.j3, data.qq.j4]
+			self.qq = np.asarray(self.qq, dtype=np.float32)
+			# read actual velocity
+			self.dq = [data.dq.j0, data.dq.j1, data.dq.j2, data.dq.j3, data.dq.j4]
+			self.dq = np.asarray(self.dq, dtype=np.float32)
 
-			#print(self.r_control)
+			print(self.qq)
 
-			alphas_reference = np.zeros((5)) 
+			qd = np.zeros((5)) 
 
+			qd_radians, _ = deltaInverseKin(self.r_control[0], self.r_control[1], self.r_control[2], self.r_control[3])
 
-			alphas_ref_radians, _ = deltaInverseKin(self.r_control[0], self.r_control[1], self.r_control[2], self.r_control[3])
+			qd[:3] = 180/np.pi*qd_radians
 
-			alphas_reference[:3] = 180/np.pi*alphas_ref_radians
+			#qd[0] = 10
+			#qd[1] = 10
+			#qd[2] = 10
 
-			#alphas_reference[3:] = self.r_control[3:]
+			# test PD control
+			self.stevec = self.stevec + 1			
+			if self.stevec < 5000:
+				aref = 10
+			else:
+				aref = 20
+				if self.stevec > 10000:
+					self.stevec = 0
+
+			qd[0] = aref #15+10*math.sin(time.time()*2)
+			qd[1] = 5 #
+			qd[2] = 5 #
+
+			self.testpub.publish(qd[0])
+
+			#qd[3:] = self.r_control[3:]
 
 			# angular error - joint coordinates
-			e = alphas_reference - self.alphas_actual
-			de = e - self.e_old
+			e = qd - self.qq
+			#de = (e - self.e_old) / self.dt
+			de = self.dq
 
+			#print(e)
+			#print(self.e_old)
+
+			#self.Kp = rospy.get_param('/robot_Kp')
+			#self.Kd = rospy.get_param('/robot_Kd')
+			#print(self.Kp)
+			
 			omegas_control = np.zeros((5), dtype=np.float32)
-			omegas_control = self.Kp*e + self.Kd * de
+			omegas_control = self.Kp*e - self.Kd * de
 
 			omegas_control = np.clip(omegas_control, -self.maxOmegas, self.maxOmegas)
-			omegas_control = omegas_control.astype(np.float64)
+			omegas_control = omegas_control.astype(np.float32)
 
+			# Save old error
 			self.e_old = e
-
+			# Save current time
 			time_ms = time.time()
-			#time_ms = time_ms.astype(np.float64)
+			# Calculate cycle time
+			self.dt = time_ms - self.start_time
 
-			data_to_send = np.zeros((20), dtype=np.float64)
+			#RobotCmd = np.zeros((6), dtype=np.float32)
+			RobotCmd = CmdRobot()
 
 			# Write data to array
-			data_to_send[:5] = omegas_control
-			data_to_send[5] = time_ms
+			RobotCmd.Timestamp = rospy.get_rostime()
+			RobotCmd.dq.j0 = omegas_control[0]
+			RobotCmd.dq.j1 = omegas_control[1]
+			RobotCmd.dq.j2 = omegas_control[2]
+			RobotCmd.dq.j3 = omegas_control[3]
+			RobotCmd.dq.j4 = omegas_control[4]
+			
 
-			#print('--------------------------')
+			print('--------------------------')
 			#print(data_to_send)
-			print(str((time.time() - self.start_time)*1000) + ' ms')
-			#print('--------------------------')
+			print(str((self.dt)*1000) + ' ms')
+			print('--------------------------')
 
-			self.pub.publish(data_to_send)
+			self.pub.publish(RobotCmd)
 
 			# Display data
 			if self.displayResult:
 
-				print(self.pretty_np('alphas ref:', alphas_reference))
-				print(self.pretty_np('alphas act:', self.alphas_actual))
+				print(self.pretty_np('alphas ref:', qd))
+				print(self.pretty_np('alphas act:', self.qq))
 				print('-	-	-	-	-	-	-')
 				print(self.pretty_np('\tP:', self.Kp*e, 4))
 				print(self.pretty_np('\tD:', self.Kd*de, 4))
 				print(self.pretty_np('omegas_ctrl:', omegas_control))
 	
 	def topics(self):
-		self.pub = rospy.Publisher(self.topicName_delta_to_plc, dataArray, queue_size=10)
 
-		rospy.init_node(self.nodeName, anonymous=False)
+		self.pub = rospy.Publisher(self.topicName_delta_to_plc, CmdRobot, queue_size=1)
 
-		rospy.Subscriber(self.topicName_r_control, Floats, self.callback_readReference)
-		rospy.Subscriber(self.topicName_delta_from_plc, dataArray, self.callback_control)
+		self.testpub = rospy.Publisher("test_data", Float32, queue_size=1)
 
 		rospy.spin()
 
 
 if __name__ == "__main__":
+	
+	
 
-	Kp = [7,7,7,2,3]
-	Kd = [5,5,5,4,4]
-	maxOmega = [5,5,5,10,10]
-	displayResults = False
+	Kp = [5,5,5,2,3]
+	rospy.set_param('/robot_Kp', [5,5,5,2,3])
+	Kd = [0.5,0.005,0.005,0.4,0.4]
+	rospy.set_param('/robot_Kd', [0.005,0.005,0.005,0.4,0.4])
+	maxOmega = [50,5,5,10,10]
+	displayResults = True
 
 	control = omegas_control(Kp, Kd, maxOmega, displayResults)
 

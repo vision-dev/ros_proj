@@ -37,7 +37,7 @@ class dataArray {
       throw new Error('Unable to serialize array field data - length must be 20')
     }
     // Serialize message field [data]
-    bufferOffset = _arraySerializer.float64(obj.data, buffer, bufferOffset, 20);
+    bufferOffset = _arraySerializer.float32(obj.data, buffer, bufferOffset, 20);
     return bufferOffset;
   }
 
@@ -46,12 +46,12 @@ class dataArray {
     let len;
     let data = new dataArray(null);
     // Deserialize message field [data]
-    data.data = _arrayDeserializer.float64(buffer, bufferOffset, 20)
+    data.data = _arrayDeserializer.float32(buffer, bufferOffset, 20)
     return data;
   }
 
   static getMessageSize(object) {
-    return 160;
+    return 80;
   }
 
   static datatype() {
@@ -61,13 +61,13 @@ class dataArray {
 
   static md5sum() {
     //Returns md5sum for a message object
-    return 'c56fc869e3a3f36debd8a653b1ddb834';
+    return '863ff43db2ffc1168b53b76ab57ce6a3';
   }
 
   static messageDefinition() {
     // Returns full string definition for message
     return `
-    float64[20] data
+    float32[20] data
     `;
   }
 

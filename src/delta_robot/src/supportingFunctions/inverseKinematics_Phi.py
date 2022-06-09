@@ -54,7 +54,7 @@ def deltaInverseKin(Px, Py, Pz, phi=0):
 	'''
 	# ### Robot parameters and dimensions: ###
 	# TODO: enter the correct values from CAD (current values are approximate)
-	l_1 = 206.227   # length of link 1 (distance between joint axes)
+	l_1 = 231.143   # length of link 1 (distance between joint axes)
 	l_2 = 500.0       # length of link 2
 
 	# -- r_0:  (end of 'link 0' = base. or Position of joint 1 in base system)
@@ -64,21 +64,22 @@ def deltaInverseKin(Px, Py, Pz, phi=0):
 	r_0 = [r_0x, r_0y, r_0z]	# don't need this one (just for debug)
 
 	# -- s_3: (s_3 = - r_3   [r_3 is from joint 3 to end of link 3. Platform end relative to joint 3)
-	s_3x = 66.292   #S
+	s_3x = 65.0   #S
 	s_3y = 0    # <-- this one should stay zero
-	s_3z = 9   #
+	s_3z = 20   #
 	s_3 = [s_3x, s_3y, s_3z]
 
 	# r_4: (end of 'link 4' = tool segment or position of the tool end relative to platform)
 	r_4x = 0 #28
 	r_4y = 0
-	r_4z = 280	# for the moment, it's more like: -280
+	r_4z = 300	# for the moment, it's more like: -280
 	r_4 = [r_4x, r_4y, r_4z]
 
 
 
 	# -- angles:	(angles of the motors - 3 motors in 2pi)
-	armAngles = [0 + np.pi/4, 2*np.pi/3 + np.pi/4, 2*np.pi*2/3 + np.pi/4]
+	#armAngles = [0 + np.pi/4, 2*np.pi/3 + np.pi/4, 2*np.pi*2/3 + np.pi/4]
+	armAngles = [0, 2*np.pi/3, 2*np.pi*2/3]
 	#armAngles = [-2*np.pi/3, 0, 2*np.pi/3]
 
 
