@@ -24,6 +24,7 @@
 #include <iostream>
 #include <iomanip>
 #include <math.h>
+#include <chrono>
 
 
 // Create route to the PLC
@@ -39,9 +40,37 @@ AdsVariable<std::array<float, 20>> delta_to_plc {route, "MAIN.RobotDataExchange.
 // Define publisher
 ros::Publisher alphas_pub; 
 
+int16_t counter;
+auto start = std::chrono::steady_clock::now();
+auto end = std::chrono::steady_clock::now();
+
+
 // Notification callback function - read alphas from PLC and publish on topic
 void callback_delta_from_plc(const AmsAddr* pAddr, const AdsNotificationHeader* pNotification, uint32_t hUser){
+	//counter = counter + 1;
 
+	if (counter==0)
+	{
+		start = std::chrono::steady_clock::now();	
+		counter = 1;
+	}
+	
+	
+
+
+	//if (counter==1){
+	//	start = std::chrono::steady_clock::now();
+	//}
+	//else{
+	//	end = std::chrono::steady_clock::now();
+
+	//	std::cout << "Elapsed time in milliseconds: "
+    //    << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+    //    << " µs" << std::endl;
+
+	//	counter = 0;
+	//}
+	
 	const float* data = reinterpret_cast<const float*>(pNotification + 1);
     
 	// Read raw data from PLC
@@ -56,10 +85,13 @@ void callback_delta_from_plc(const AmsAddr* pAddr, const AdsNotificationHeader* 
 	beckhoff_msgs::JointStateRobot RobotJointState;
 	// Read actual positions
 
-	int32_t now_sec = int(floor(delta_receive.data[0]*0.001));
-	int32_t now_nsec = int(delta_receive.data[0]*0.001*1e9)% int(1e9) ;
-	RobotJointState.Timestamp.sec = now_sec;
-	RobotJointState.Timestamp.nsec = now_nsec;
+	//int32_t now_sec = int(floor(delta_receive.data[0]*0.001));
+	//int32_t now_nsec = int(delta_receive.data[0]*0.001*1e9)% int(1e9) ;
+	//RobotJointState.Timestamp.sec = now_sec;
+	//RobotJointState.Timestamp.nsec = now_nsec;
+	RobotJointState.Timestamp.sec  = int(delta_receive.data[0]);
+	RobotJointState.Timestamp.nsec = int((delta_receive.data[0] - int(delta_receive.data[0]))*1e9);
+
 	RobotJointState.qq.j0 = delta_receive.data[1];
 	RobotJointState.qq.j1 = delta_receive.data[2];
 	RobotJointState.qq.j2 = delta_receive.data[3];
@@ -72,20 +104,32 @@ void callback_delta_from_plc(const AmsAddr* pAddr, const AdsNotificationHeader* 
 	RobotJointState.dq.j3 = delta_receive.data[9];
 	RobotJointState.dq.j4 = delta_receive.data[10];
 
-	std::cout <<" ADS read " << RobotJointState.Timestamp << '\n';
-
 	alphas_pub.publish(RobotJointState);
+
 }
 
 // Send omegas to PLC
 void callback_delta_to_plc(const beckhoff_msgs::CmdRobot& data){
+
+	
 	
 	// Timestamp, omegas to PLC
 	float now_time = float(data.Timestamp.sec) + float(data.Timestamp.nsec) / 10e-9;
 	delta_to_plc = {now_time, data.dq.j0, data.dq.j1, data.dq.j2, data.dq.j3, data.dq.j4,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	//delta_to_plc = { 0, 0.0, 0, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
-	std::cout <<" ADS write " << now_time << '\n';
+	//std::cout <<" ADS write " << now_time << '\n';
+	
+	if (counter==1)
+	{
+		end = std::chrono::steady_clock::now();
+
+		std::cout << "Elapsed time in microseconds: "
+		<< std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+		<< " ms" << std::endl;
+
+		counter = 0;
+	}
 }
 
 // Notification callback function - read odometry data

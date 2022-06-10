@@ -26,6 +26,9 @@ class omegas_control:
 		self.dt    = 0.0
 		self.e_old = 0.0
 		self.Timestamp_old = 0
+		self.newData_flag = False
+		self.dqd = np.zeros((5)) 
+
 
 		# Define node and topics
 		# Names
@@ -62,10 +65,12 @@ class omegas_control:
 		# Check if we received new data from PLC
 		#print(f"timestamp {repr(data)}")
 		if data.Timestamp != self.Timestamp_old:
-			newData_flag = True
+			self.newData_flag = True
+		
+		#print(data.Timestamp)
 
-		if newData_flag:
-			newData_flag = False
+		if self.newData_flag:
+			self.newData_flag = False
 			#dt = (data.Timestamp - self.Timestamp_old)
 			#print("delta stevec: " + str(dt))
 			self.Timestamp_old = data.Timestamp
@@ -77,40 +82,47 @@ class omegas_control:
 			self.dq = [data.dq.j0, data.dq.j1, data.dq.j2, data.dq.j3, data.dq.j4]
 			self.dq = np.asarray(self.dq, dtype=np.float32)
 
-			print(self.qq)
+			#print(self.qq)
 
+			# Desired axis velocity
 			qd = np.zeros((5)) 
+			# Desired axis velocity in radians
+			omega = 3
+			
+			x_sin_test = 100*math.sin(time.time()*4)
+			#print(x_sin_test)
 
 			qd_radians, _ = deltaInverseKin(self.r_control[0], self.r_control[1], self.r_control[2], self.r_control[3])
-
+			#qd_radians, _ = deltaInverseKin(x_sin_test, 0, -750, self.r_control[3])
+			# Transform to degrees
 			qd[:3] = 180/np.pi*qd_radians
 
-			#qd[0] = 10
-			#qd[1] = 10
-			#qd[2] = 10
-
 			# test PD control
+			'''
 			self.stevec = self.stevec + 1			
 			if self.stevec < 5000:
 				aref = 10
 			else:
-				aref = 20
+				aref = 30
 				if self.stevec > 10000:
 					self.stevec = 0
 
 			qd[0] = aref #15+10*math.sin(time.time()*2)
 			qd[1] = 5 #
 			qd[2] = 5 #
+			'''
+			
 
 			self.testpub.publish(qd[0])
 
-			#qd[3:] = self.r_control[3:]
+			qd[3:] = self.r_control[3:]
 
 			# angular error - joint coordinates
 			e = qd - self.qq
 			#de = (e - self.e_old) / self.dt
-			de = self.dq
-
+			#de = self.dqd - self.dq
+			de = -self.dq
+			
 			#print(e)
 			#print(self.e_old)
 
@@ -119,7 +131,7 @@ class omegas_control:
 			#print(self.Kp)
 			
 			omegas_control = np.zeros((5), dtype=np.float32)
-			omegas_control = self.Kp*e - self.Kd * de
+			omegas_control = self.Kp*e + self.Kd * de
 
 			omegas_control = np.clip(omegas_control, -self.maxOmegas, self.maxOmegas)
 			omegas_control = omegas_control.astype(np.float32)
@@ -134,6 +146,9 @@ class omegas_control:
 			#RobotCmd = np.zeros((6), dtype=np.float32)
 			RobotCmd = CmdRobot()
 
+			# Desired velocity
+			self.dqd = omegas_control
+
 			# Write data to array
 			RobotCmd.Timestamp = rospy.get_rostime()
 			RobotCmd.dq.j0 = omegas_control[0]
@@ -143,10 +158,10 @@ class omegas_control:
 			RobotCmd.dq.j4 = omegas_control[4]
 			
 
-			print('--------------------------')
+			#print('--------------------------')
 			#print(data_to_send)
-			print(str((self.dt)*1000) + ' ms')
-			print('--------------------------')
+			#print(str((self.dt)*1000) + ' ms')
+			#print('--------------------------')
 
 			self.pub.publish(RobotCmd)
 
@@ -172,13 +187,14 @@ class omegas_control:
 if __name__ == "__main__":
 	
 	
-
-	Kp = [5,5,5,2,3]
-	rospy.set_param('/robot_Kp', [5,5,5,2,3])
-	Kd = [0.5,0.005,0.005,0.4,0.4]
-	rospy.set_param('/robot_Kd', [0.005,0.005,0.005,0.4,0.4])
-	maxOmega = [50,5,5,10,10]
-	displayResults = True
+	Kp_delta = 10
+	Kp = [Kp_delta,Kp_delta,Kp_delta,2,3]
+	#rospy.set_param('/robot_Kp', [5,5,5,2,3])
+	Kd_delta = 0.5
+	Kd = [Kd_delta, Kd_delta, Kd_delta,0.4,0.4]
+	#rospy.set_param('/robot_Kd', [0.005,0.005,0.005,0.4,0.4])
+	maxOmega = [100,100,100,10,10]
+	displayResults = False
 
 	control = omegas_control(Kp, Kd, maxOmega, displayResults)
 

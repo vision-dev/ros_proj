@@ -48,7 +48,7 @@ dT_ms = int(1000/nodeRate)
 # ### Initialization ###
 
 # initialize Interpolator:
-maxSpeed = np.array([200, 200, 200, 200, 100])
+maxSpeed = np.array([500, 500, 500, 200, 100])
 interpolator = minJerkInterpolator(maxSpeed=maxSpeed, dT=0.001, printAll=False)
 
 	
@@ -69,7 +69,7 @@ def talker():
 		[-100,	0, 	    -750, 	phi, 	gripperOpenedPosition],
 		[100,	0,	 	-750, 	phi, 	gripperOpenedPosition],
 		[0,	  100,	 	-750, 	phi, 	gripperOpenedPosition],
-		[-0, -100,	-700, 	phi, 	gripperOpenedPosition],
+		[-0, -100,	-750, 	phi, 	gripperOpenedPosition],
 		[-0,	0,	-800, 	phi, 	gripperOpenedPosition],
 		[-0,	0,	-810, 	phi, 	gripperOpenedPosition],
 		[-0,	0,	-820, 	phi, 	gripperOpenedPosition],
