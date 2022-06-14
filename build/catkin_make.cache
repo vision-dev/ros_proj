@@ -1,2 +1,2 @@
-beckhoff_comm:beckhoff_msgs:delta_robot:pc_to_plc_sub_py:plc_to_pc_pub_cpp
+beckhoff_comm:beckhoff_msgs:delta_robot:joystick:pc_to_plc_sub_py:plc_to_pc_pub_cpp
 -DCATKIN_DEVEL_PREFIX=/home/student/Asparagus_project/ros_proj/devel -DCMAKE_INSTALL_PREFIX=/home/student/Asparagus_project/ros_proj/install -G Unix Makefiles

@@ -90,6 +90,13 @@
 /home/student/Asparagus_project/ros_proj/build/delta_robot/CMakeFiles/rebuild_cache.dir
 /home/student/Asparagus_project/ros_proj/build/delta_robot/CMakeFiles/edit_cache.dir
 /home/student/Asparagus_project/ros_proj/build/delta_robot/CMakeFiles/test.dir
+/home/student/Asparagus_project/ros_proj/build/joystick/CMakeFiles/install/strip.dir
+/home/student/Asparagus_project/ros_proj/build/joystick/CMakeFiles/install/local.dir
+/home/student/Asparagus_project/ros_proj/build/joystick/CMakeFiles/install.dir
+/home/student/Asparagus_project/ros_proj/build/joystick/CMakeFiles/list_install_components.dir
+/home/student/Asparagus_project/ros_proj/build/joystick/CMakeFiles/rebuild_cache.dir
+/home/student/Asparagus_project/ros_proj/build/joystick/CMakeFiles/edit_cache.dir
+/home/student/Asparagus_project/ros_proj/build/joystick/CMakeFiles/test.dir
 /home/student/Asparagus_project/ros_proj/build/pc_to_plc_sub_py/CMakeFiles/install/strip.dir
 /home/student/Asparagus_project/ros_proj/build/pc_to_plc_sub_py/CMakeFiles/install/local.dir
 /home/student/Asparagus_project/ros_proj/build/pc_to_plc_sub_py/CMakeFiles/install.dir

@@ -134,6 +134,7 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("/home/student/Asparagus_project/ros_proj/build/beckhoff_msgs/cmake_install.cmake")
   include("/home/student/Asparagus_project/ros_proj/build/beckhoff_comm/cmake_install.cmake")
   include("/home/student/Asparagus_project/ros_proj/build/delta_robot/cmake_install.cmake")
+  include("/home/student/Asparagus_project/ros_proj/build/joystick/cmake_install.cmake")
   include("/home/student/Asparagus_project/ros_proj/build/pc_to_plc_sub_py/cmake_install.cmake")
   include("/home/student/Asparagus_project/ros_proj/build/plc_to_pc_pub_cpp/cmake_install.cmake")
 

@@ -16,7 +16,7 @@ from std_msgs.msg import Float32
 
 from supportingFunctions.inverseKinematics_Phi import deltaInverseKin
 
-class omegas_control:
+class velocity_control:
 	def __init__(self, Kp, Kd, maxOmegas, displayResult=False):
 		self.Kp = np.asarray(Kp)
 		self.Kd = np.asarray(Kd)
@@ -130,11 +130,11 @@ class omegas_control:
 			#self.Kd = rospy.get_param('/robot_Kd')
 			#print(self.Kp)
 			
-			omegas_control = np.zeros((5), dtype=np.float32)
-			omegas_control = self.Kp*e + self.Kd * de
+			dq = np.zeros((5), dtype=np.float32)
+			dq = self.Kp*e + self.Kd * de
 
-			omegas_control = np.clip(omegas_control, -self.maxOmegas, self.maxOmegas)
-			omegas_control = omegas_control.astype(np.float32)
+			dq = np.clip(dq, -self.maxOmegas, self.maxOmegas)
+			dq = dq.astype(np.float32)
 
 			# Save old error
 			self.e_old = e
@@ -147,15 +147,15 @@ class omegas_control:
 			RobotCmd = CmdRobot()
 
 			# Desired velocity
-			self.dqd = omegas_control
+			self.dqd = dq
 
 			# Write data to array
 			RobotCmd.Timestamp = rospy.get_rostime()
-			RobotCmd.dq.j0 = omegas_control[0]
-			RobotCmd.dq.j1 = omegas_control[1]
-			RobotCmd.dq.j2 = omegas_control[2]
-			RobotCmd.dq.j3 = omegas_control[3]
-			RobotCmd.dq.j4 = omegas_control[4]
+			RobotCmd.dq.j0 = dq[0]
+			RobotCmd.dq.j1 = dq[1]
+			RobotCmd.dq.j2 = dq[2]
+			RobotCmd.dq.j3 = dq[3]
+			RobotCmd.dq.j4 = dq[4]
 			
 
 			#print('--------------------------')
@@ -173,7 +173,7 @@ class omegas_control:
 				print('-	-	-	-	-	-	-')
 				print(self.pretty_np('\tP:', self.Kp*e, 4))
 				print(self.pretty_np('\tD:', self.Kd*de, 4))
-				print(self.pretty_np('omegas_ctrl:', omegas_control))
+				print(self.pretty_np('omegas_ctrl:', dq))
 	
 	def topics(self):
 
@@ -196,7 +196,7 @@ if __name__ == "__main__":
 	maxOmega = [100,100,100,10,10]
 	displayResults = False
 
-	control = omegas_control(Kp, Kd, maxOmega, displayResults)
+	control = velocity_control(Kp, Kd, maxOmega, displayResults)
 
 	control.topics()
 
