@@ -44,15 +44,18 @@ class joystick_control:
 		# Set start position of the robot
 		self.points_X = 0
 		self.points_Y = 0
-		self.points_Z = -650
+		self.points_Z = -700
 		self.point_rot_z = 0
+		self.total_time = 0
 
 		self.joy = Joy()
 		self.joy.axes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 		self.joy.buttons = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
+		self.setVel = self.maxVel / 2
+
 		# User settings:
-		nodeName = 'joy_control'
+		nodeName = 'delta_joy_control'
 		self.topicName = '/r_control'
 		nodeRate = 1000	# in Hz
 		dT_ms = int(1000/nodeRate)
@@ -61,8 +64,8 @@ class joystick_control:
 		rate = rospy.Rate(5)
 
 		# initialize Interpolator:
-		maxSpeed = np.array([500, 500, 500, 200, 100])
-		self.interpolator = minJerkInterpolator(maxSpeed=maxSpeed, dT=dT_ms*0.001, printAll=False)
+		self.maxSpeed = np.array([self.maxVel*10, self.maxVel*10, self.maxVel*10, self.rotVel*5, self.rotVel*5])
+		self.interpolator = minJerkInterpolator(maxSpeed=self.maxSpeed, dT=dT_ms*0.001, printAll=False)
 
 		rospy.Subscriber("joy", Joy, self.callback_joy)
 
@@ -75,34 +78,47 @@ class joystick_control:
 
 	def generate_points(self):
 		# Determine velocities in all directions
+		# Decrease and increase velocity
+		if self.joy.buttons[6]:
+			self.setVel = self.setVel - 50 * self.dt
+			if self.setVel < 1:
+				self.setVel = 1
+		elif self.joy.buttons[7]:
+			self.setVel = self.setVel + 50 * self.dt
+			if self.setVel > self.maxVel:
+				self.setVel = self.maxVel
+		
+		print(self.setVel)
+		
 
 		# Check if deadman switch is pressed on gamepad
 		deadman_switch = self.joy.buttons[5]
-		print(deadman_switch)
+		#print(deadman_switch)
 		if deadman_switch:
 			# X axis 
-			vel_X = self.joy.axes[0] * self.maxVel
-			#print(vel_X)
+			vel_X = self.joy.axes[0] * self.setVel
+			#print(self.joy.axes[0])
 			# Y axis
-			vel_Y = self.joy.axes[1] * self.maxVel
+			vel_Y = self.joy.axes[1] * self.setVel
 			# Z axis
-			vel_Z = self.joy.axes[7] * self.maxVel
+			vel_Z = self.joy.axes[7] * self.setVel
 			# Rotation around Z axis
 			rot_Z = self.joy.axes[6] * self.rotVel
 			# Open/close gripper
 			gripper_btn = self.joy.buttons[4]
+			# opening and closing gripper
+			if gripper_btn==1 and self.gripper_btn_old==0:
+				self.close_gripper = not(self.close_gripper)
+			self.gripper_btn_old = gripper_btn
 		else:
 			vel_X = 0
 			vel_Y = 0
 			vel_Z = 0
 			rot_Z = 0
 			gripper_btn = 0
+			self.gripper_btn_old = 0
 
-		# opening and closing gripper
-		if gripper_btn==1 and self.gripper_btn_old==0:
-			self.close_gripper = not(self.close_gripper)
-		self.gripper_btn_old = gripper_btn
-
+		
 		if self.close_gripper:
 			gripper_poz = self.gripperClosedPosition
 		else:
@@ -148,19 +164,28 @@ class joystick_control:
 
 		# Generate next point in trajectory
 		next_point = np.array([self.points_X, self.points_Y, self.points_Z, self.point_rot_z, gripper_poz])
+		print(self.points_X)
+		print(self.points_Y)
 
 		self.interpolator.addPoint(next_point)     
 
 		status, r_control = self.interpolator.run()
 
 		if status > 0:
-			
+
 			r_control = r_control.astype(dtype=np.float32)
-			print(r_control)
+			
 			self.pub.publish(r_control)
 
 			x = r_control[0]
 			y = r_control[1]   
+
+			self.total_time = self.total_time + self.dt
+			if self.total_time > 1:
+				self.total_time = 0
+				#print(r_control)
+
+			#print(r_control)
 
 		# Measuring cycle time
 		self.dt = time.time() - self.start_time
@@ -171,20 +196,16 @@ class joystick_control:
 		#rate = rospy.Rate(5)
 		#rospy.spin()
 
-		print(self.dt)
-
-
-
 
 if __name__ == '__main__':
-	rospy.set_param('/robot_max_vel', 100)
-	rospy.set_param('/robot_rot_vel', 80)
+	rospy.set_param('/robot_max_vel', 300)
+	rospy.set_param('/robot_rot_vel', 50)
 
 	# Call class
 	# Set limits in x, y, z direction and also rotation around z axis
-	boundries = [[-300, 300], [-300, 300], [-850, -500], [-180, 180] ]
+	boundries = [[-200, 200], [-200, 200], [-900, -600], [-180, 180] ]
 	joy_control = joystick_control(boundries=boundries)
-	rate = rospy.Rate(100)
+	rate = rospy.Rate(500)
 
 	while not rospy.is_shutdown():
 		joy_control.generate_points()

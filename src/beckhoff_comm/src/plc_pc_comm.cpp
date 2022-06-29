@@ -1,20 +1,14 @@
 // Ros libraries
 #include "ros/ros.h"
-
-// Include msg to communicate with caterpillars
+// Include msg to communicate with tracks
 #include "geometry_msgs/TwistStamped.h"
-
 // Include msg to communicate with robot
 #include "beckhoff_msgs/CmdRobot.h"
 #include "beckhoff_msgs/JointStateRobot.h"
-
 #include "std_msgs/Float32.h"
 #include "rospy_tutorials/Floats.h"
-
 // Raw message for sending to PLC
 #include "beckhoff_msgs/dataArray.h"
-
-//#include "std_msgs/MultiArrayDimension.h"
 // Ads libraries
 #include "../AdsLib/AdsLib.h"
 #include "../AdsLib/AdsVariable.h"
@@ -55,9 +49,6 @@ void callback_delta_from_plc(const AmsAddr* pAddr, const AdsNotificationHeader* 
 		counter = 1;
 	}
 	
-	
-
-
 	//if (counter==1){
 	//	start = std::chrono::steady_clock::now();
 	//}

@@ -149,6 +149,8 @@ class velocity_control:
 			# Desired velocity
 			self.dqd = dq
 
+			print(dq)
+
 			# Write data to array
 			RobotCmd.Timestamp = rospy.get_rostime()
 			RobotCmd.dq.j0 = dq[0]
@@ -187,13 +189,13 @@ class velocity_control:
 if __name__ == "__main__":
 	
 	
-	Kp_delta = 10
+	Kp_delta = 5
 	Kp = [Kp_delta,Kp_delta,Kp_delta,2,3]
 	#rospy.set_param('/robot_Kp', [5,5,5,2,3])
-	Kd_delta = 0.5
+	Kd_delta = 0.05
 	Kd = [Kd_delta, Kd_delta, Kd_delta,0.4,0.4]
 	#rospy.set_param('/robot_Kd', [0.005,0.005,0.005,0.4,0.4])
-	maxOmega = [100,100,100,10,10]
+	maxOmega = [300,300,300,10,10]
 	displayResults = False
 
 	control = velocity_control(Kp, Kd, maxOmega, displayResults)
