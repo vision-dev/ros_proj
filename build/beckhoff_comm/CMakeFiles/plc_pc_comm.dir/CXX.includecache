@@ -179,6 +179,8 @@ ros/ros.h
 /home/student/Asparagus_project/ros_proj/src/beckhoff_comm/src/ros/ros.h
 geometry_msgs/TwistStamped.h
 /home/student/Asparagus_project/ros_proj/src/beckhoff_comm/src/geometry_msgs/TwistStamped.h
+geometry_msgs/Pose2D.h
+/home/student/Asparagus_project/ros_proj/src/beckhoff_comm/src/geometry_msgs/Pose2D.h
 beckhoff_msgs/CmdRobot.h
 /home/student/Asparagus_project/ros_proj/src/beckhoff_comm/src/beckhoff_msgs/CmdRobot.h
 beckhoff_msgs/JointStateRobot.h
@@ -204,6 +206,22 @@ iomanip
 math.h
 -
 chrono
+-
+
+/opt/ros/noetic/include/geometry_msgs/Pose2D.h
+string
+-
+vector
+-
+map
+-
+ros/types.h
+-
+ros/serialization.h
+-
+ros/builtin_message_traits.h
+-
+ros/message_operations.h
 -
 
 /opt/ros/noetic/include/geometry_msgs/Twist.h

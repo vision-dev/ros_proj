@@ -16,6 +16,7 @@ import rospy
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 from sensor_msgs.msg import Joy
+from geometry_msgs.msg import TwistStamped
 import time
 
 import numpy as np
@@ -40,34 +41,50 @@ class joystick_control:
 		self.joy.buttons = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 		self.setVel = self.maxVel / 2
+		self.rotVel = self.maxRotVel / 3
 		
 		self.start_movement_btn_old = 0
 		self.linear_movement = False
 
+		# Define twist
+		self.twist = TwistStamped()
+
 		# User settings:
 		nodeName = 'track_joy_control'
-		self.topicName = '/tracks/cmd'
+		self.topicName = '/tracks/twist_cmd'
 
 		rospy.init_node(nodeName)
 
-		self.pub = rospy.Publisher(self.topicName, numpy_msg(Floats),queue_size=1)
+		rospy.Subscriber("joy", Joy, self.callback_joy)
+
+		self.pub = rospy.Publisher(self.topicName, TwistStamped,queue_size=1)
 
 	def callback_joy(self, data):
 		self.joy = data
 
 	def generate_points(self):
 		# Determine velocities in all directions
-		# Decrease and increase velocity
-		if self.joy.buttons[6]:
-			self.setVel = self.setVel - 10 * self.dt
-			if self.setVel < 1:
-				self.setVel = 1
-		elif self.joy.buttons[7]:
-			self.setVel = self.setVel + 10 * self.dt
+		# Decrease and increase linear velocity (Y and A button on joystick)
+		if self.joy.buttons[0]:
+			self.setVel = self.setVel -  0.05* self.dt
+			if self.setVel < 0:
+				self.setVel = 0
+		elif self.joy.buttons[3]:
+			self.setVel = self.setVel + 0.05* self.dt
 			if self.setVel > self.maxVel:
 				self.setVel = self.maxVel
+
+		# Decrease and increase angular velocity (X and B button on joystick)
+		if self.joy.buttons[2]:
+			self.rotVel = self.rotVel -  0.05* self.dt
+			if self.rotVel < 0:
+				self.rotVel = 0
+		elif self.joy.buttons[1]:
+			self.rotVel = self.rotVel + 0.05* self.dt
+			if self.rotVel > self.maxRotVel:
+				self.rotVel = self.maxRotVel
 		
-		print(self.setVel)
+		print(self.rotVel)
 		
 
 		# Check if deadman switch is pressed on gamepad
@@ -75,9 +92,9 @@ class joystick_control:
 		#print(deadman_switch)
 		if deadman_switch:
 			# Linear velocity
-			linear_velocity = self.joy.axes[1] * self.setVel
+			linear_velocity = self.joy.axes[4] * self.setVel
 			# Angular velocity
-			angular_velocity = self.joy.axes[0] * self.rotVel
+			angular_velocity = self.joy.axes[3] * self.rotVel
 			# Move track with constant linear velocity
 			start_movement_btn = self.joy.buttons[4]
 			if start_movement_btn==1 and self.start_movement_btn_old==0:
@@ -97,24 +114,32 @@ class joystick_control:
 		if self.linear_movement:
 			linear_velocity = self.setVel
 
-		
 		# Measuring cycle time
 		self.dt = time.time() - self.start_time
 		# Save current time
 		self.start_time = time.time()
+
+		# Send timestamp
+		self.twist.header.stamp = rospy.get_rostime()
+		# Send velocity to PLC
+		self.twist.twist.linear.x = linear_velocity
+		self.twist.twist.angular.z = angular_velocity
+
+		print(self.twist.twist)
+
+		self.pub.publish(self.twist)
 		
-		self.pub = rospy.Publisher(self.topicName, numpy_msg(Floats),queue_size=1)
+		self.pub = rospy.Publisher(self.topicName, TwistStamped,queue_size=1)
 
 
 
 if __name__ == '__main__':
-	rospy.set_param('/tracks_max_vel', 50)
-	rospy.set_param('/tracks_max_rot_vel', 50)
+	rospy.set_param('/tracks_max_vel', 0.2)
+	rospy.set_param('/tracks_max_rot_vel', 0.1)
 
 	# Call class
 	# Set limits in x, y, z direction and also rotation around z axis
-	boundries = [[-300, 300], [-300, 300], [-850, -500], [-180, 180] ]
-	joy_control = joystick_control(boundries=boundries)
+	joy_control = joystick_control()
 	rate = rospy.Rate(500)
 
 	while not rospy.is_shutdown():

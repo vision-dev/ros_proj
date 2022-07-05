@@ -16,6 +16,7 @@ import rospy
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 from sensor_msgs.msg import Joy
+from geometry_msgs.msg import TwistStamped
 import time
 
 import numpy as np
@@ -23,6 +24,7 @@ import matplotlib.pyplot as plt
 import cv2
 
 from supportingFunctions.minJerkInterpolator import minJerkInterpolator
+from supportingFunctions.hold_robot_pose import hold_robot_poz
 
 class joystick_control:
 	def __init__(self, boundries, displayResult=False):
@@ -52,6 +54,8 @@ class joystick_control:
 		self.joy.axes = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 		self.joy.buttons = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
+		self.tracks_twist = TwistStamped()
+
 		self.setVel = self.maxVel / 2
 
 		# User settings:
@@ -69,11 +73,19 @@ class joystick_control:
 
 		rospy.Subscriber("joy", Joy, self.callback_joy)
 
+		# Get twist of the tracks
+		rospy.Subscriber("/tracks/twist_state", TwistStamped, self.callback_tracks_twist)
+
 		self.pub = rospy.Publisher(self.topicName, numpy_msg(Floats),queue_size=1)
 
 	def callback_joy(self, data):
 		self.joy = data
 		#print(self.joy)
+		#self.generate_points()
+
+	def callback_tracks_twist(self, data):
+		self.tracks_twist = data
+		#print(self.tracks_twist)
 		#self.generate_points()
 
 	def generate_points(self):
@@ -88,7 +100,7 @@ class joystick_control:
 			if self.setVel > self.maxVel:
 				self.setVel = self.maxVel
 		
-		print(self.setVel)
+		#print(self.setVel)
 		
 
 		# Check if deadman switch is pressed on gamepad
@@ -130,6 +142,16 @@ class joystick_control:
 		self.points_Z = self.points_Z + vel_Z * self.dt
 		self.point_rot_z = self.point_rot_z + rot_Z * self.dt
 
+		# Check if robot holding function is active (if left botom button is pressed)
+		current_poz = np.array([self.points_X, self.points_Y, self.points_Z, self.point_rot_z, gripper_poz])
+		if self.joy.axes[2] == -1 and deadman_switch:
+			linear_velocity = self.tracks_twist.twist.linear.x * 1000
+			print(linear_velocity)
+			new_poz = hold_robot_poz(current_poz, linear_velocity, self.dt)
+
+			self.points_Y = new_poz[1]
+			#print(new_poz)
+
 		# Set limits in x direction
 		if self.points_X < self.boundries[0][0]:
 			# Negative limit
@@ -164,8 +186,8 @@ class joystick_control:
 
 		# Generate next point in trajectory
 		next_point = np.array([self.points_X, self.points_Y, self.points_Z, self.point_rot_z, gripper_poz])
-		print(self.points_X)
-		print(self.points_Y)
+		#print(self.points_X)
+		#print(self.points_Y)
 
 		self.interpolator.addPoint(next_point)     
 
@@ -203,7 +225,7 @@ if __name__ == '__main__':
 
 	# Call class
 	# Set limits in x, y, z direction and also rotation around z axis
-	boundries = [[-200, 200], [-200, 200], [-900, -600], [-180, 180] ]
+	boundries = [[-400, 400], [-300, 300], [-900, -600], [-180, 180] ]
 	joy_control = joystick_control(boundries=boundries)
 	rate = rospy.Rate(500)
 
