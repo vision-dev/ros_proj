@@ -17,6 +17,7 @@ from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 from sensor_msgs.msg import Joy
 from geometry_msgs.msg import TwistStamped
+from geometry_msgs.msg import Pose2D
 import time
 
 import numpy as np
@@ -58,6 +59,9 @@ class joystick_control:
 
 		self.setVel = self.maxVel / 2
 
+		self.tracks_pose = Pose2D()
+		self.save_pose_flag = False
+
 		# User settings:
 		nodeName = 'delta_joy_control'
 		self.topicName = '/r_control'
@@ -65,7 +69,7 @@ class joystick_control:
 		dT_ms = int(1000/nodeRate)
 
 		rospy.init_node(nodeName)
-		rate = rospy.Rate(5)
+		#rate = rospy.Rate(5)
 
 		# initialize Interpolator:
 		self.maxSpeed = np.array([self.maxVel*10, self.maxVel*10, self.maxVel*10, self.rotVel*5, self.rotVel*5])
@@ -75,6 +79,8 @@ class joystick_control:
 
 		# Get twist of the tracks
 		rospy.Subscriber("/tracks/twist_state", TwistStamped, self.callback_tracks_twist)
+		# Get pose 2D of the tracks
+		rospy.Subscriber("/tracks/pose", Pose2D, self.callback_tracks_pose)
 
 		self.pub = rospy.Publisher(self.topicName, numpy_msg(Floats),queue_size=1)
 
@@ -85,8 +91,9 @@ class joystick_control:
 
 	def callback_tracks_twist(self, data):
 		self.tracks_twist = data
-		#print(self.tracks_twist)
-		#self.generate_points()
+
+	def callback_tracks_pose(self, data):
+		self.tracks_pose = data
 
 	def generate_points(self):
 		# Determine velocities in all directions
@@ -108,7 +115,7 @@ class joystick_control:
 		#print(deadman_switch)
 		if deadman_switch:
 			# X axis 
-			vel_X = self.joy.axes[0] * self.setVel
+			vel_X = self.joy.axes[0] * -self.setVel
 			#print(self.joy.axes[0])
 			# Y axis
 			vel_Y = self.joy.axes[1] * self.setVel
@@ -145,11 +152,16 @@ class joystick_control:
 		# Check if robot holding function is active (if left botom button is pressed)
 		current_poz = np.array([self.points_X, self.points_Y, self.points_Z, self.point_rot_z, gripper_poz])
 		if self.joy.axes[2] == -1 and deadman_switch:
+			# Calculate relative velocity of the delta robot 
+
+			# Transform velocity from m/s to mm/s
 			linear_velocity = self.tracks_twist.twist.linear.x * 1000
-			print(linear_velocity)
-			new_poz = hold_robot_poz(current_poz, linear_velocity, self.dt)
+			angular_velocity = -self.tracks_twist.twist.angular.z
+			#print(angular_velocity)
+			new_poz = hold_robot_poz(current_poz, linear_velocity, angular_velocity, self.dt)
 
 			self.points_Y = new_poz[1]
+			self.points_X = new_poz[0]
 			#print(new_poz)
 
 		# Set limits in x direction
