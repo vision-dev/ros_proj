@@ -416,6 +416,12 @@ _gtest_SOURCES:FILEPATH=/usr/src/gtest/src/gtest.cc
 //Path to a file.
 _path_name:FILEPATH=/home/student/Asparagus_project/ros_proj/src/geometry2/tf2_sensor_msgs/test/test_tf2_sensor_msgs.py
 
+//Value Computed by CMake
+acquire_asparagus_BINARY_DIR:STATIC=/home/student/Asparagus_project/ros_proj/build/acquire_asparagus
+
+//Value Computed by CMake
+acquire_asparagus_SOURCE_DIR:STATIC=/home/student/Asparagus_project/ros_proj/src/acquire_asparagus
+
 //The directory containing a CMake configuration file for actionlib.
 actionlib_DIR:PATH=/opt/ros/noetic/share/actionlib/cmake
 
@@ -725,6 +731,18 @@ tracks_BINARY_DIR:STATIC=/home/student/Asparagus_project/ros_proj/build/tracks
 //Value Computed by CMake
 tracks_SOURCE_DIR:STATIC=/home/student/Asparagus_project/ros_proj/src/tracks
 
+//Value Computed by CMake
+transformacije_BINARY_DIR:STATIC=/home/student/Asparagus_project/ros_proj/build/transformacije/transformacije
+
+//Value Computed by CMake
+transformacije_SOURCE_DIR:STATIC=/home/student/Asparagus_project/ros_proj/src/transformacije/transformacije
+
+//Value Computed by CMake
+transformations_BINARY_DIR:STATIC=/home/student/Asparagus_project/ros_proj/build/transformations
+
+//Value Computed by CMake
+transformations_SOURCE_DIR:STATIC=/home/student/Asparagus_project/ros_proj/src/transformations
+
 //The directory containing a CMake configuration file for xmlrpcpp.
 xmlrpcpp_DIR:PATH=/opt/ros/noetic/share/xmlrpcpp/cmake
 
@@ -878,7 +896,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=22
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=25
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP

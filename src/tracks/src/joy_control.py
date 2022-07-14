@@ -84,7 +84,7 @@ class joystick_control:
 			if self.rotVel > self.maxRotVel:
 				self.rotVel = self.maxRotVel
 		
-		print(self.rotVel)
+		#print(self.rotVel)
 		
 
 		# Check if deadman switch is pressed on gamepad
@@ -125,7 +125,7 @@ class joystick_control:
 		self.twist.twist.linear.x = linear_velocity
 		self.twist.twist.angular.z = angular_velocity
 
-		print(self.twist.twist)
+		#print(self.twist.twist)
 
 		self.pub.publish(self.twist)
 		

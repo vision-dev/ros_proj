@@ -19,9 +19,25 @@ Zagon programa za pemikanje robota z joystickom
 3) Zaženemo "rosrun joy joy_node" s tem se vzpostavi povezava z joystickom
 4) Zaženemo "rosrun delta_robot joy_control.py" s tem beremo ukaz iz joysticka
 5) Zaženemo "rosrun delta_robot control_r2omegas.py". V tej kodi teče PD regulator za robota.
+6) Zaženemo "rosrun delta_robot control_r2omegas.py". V tej kodi teče PD regulator za robota.
 
 
 **** 1.07.22 *****
 
 Povezava na računalnik brez monitorja.
 https://kb.nomachine.com/AR03P00973
+
+**** 13.07.22 *****
+
+Zagon laserskega skenerja Sick LMS111 in programov za generiranje 3D slike in pretvorbo v world koordinatni sistem
+
+1) Zaženemo "roslaunch sick_scan sick_lms_1xx.launch hostname:=192.168.1.100" s tem se vzpostavi komunikacija za laserskim skenerjem
+2) Zaženemo "rosrun transformations sensor_to_robot.py laser 0.7 0.05 0.5 0 2.36 0" da dobimo statično transformacijo med koordinatnim sistemom laserja in robota
+3) Zaženemo "rosrun transformations robot_to_global.py" da dobimo dinamično transformacijo med koordinatnim sistemom robota in globalnim sistemom
+4) Zaženemo "rosrun delta_robot sick_scanner.py" program pretvarja koordinate v robot cs
+5) Zaženemo "rosrun delta_robot get_img_from_scanner2.py" program sestavlja sliko skenerja v globalnem koordinatnem sistemu
+
+
+
+
+

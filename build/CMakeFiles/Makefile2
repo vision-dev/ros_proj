@@ -59,6 +59,7 @@ all: geometry2/tf2_msgs/all
 all: geometry2/tf2/all
 all: geometry2/tf2_bullet/all
 all: geometry2/tf2_eigen/all
+all: acquire_asparagus/all
 all: beckhoff_msgs/all
 all: beckhoff_comm/all
 all: delta_robot/all
@@ -72,6 +73,8 @@ all: geometry2/test_tf2/all
 all: geometry2/tf2_sensor_msgs/all
 all: geometry2/tf2_tools/all
 all: tracks/all
+all: transformacije/transformacije/all
+all: transformations/all
 
 .PHONY : all
 
@@ -82,6 +85,7 @@ preinstall: geometry2/tf2_msgs/preinstall
 preinstall: geometry2/tf2/preinstall
 preinstall: geometry2/tf2_bullet/preinstall
 preinstall: geometry2/tf2_eigen/preinstall
+preinstall: acquire_asparagus/preinstall
 preinstall: beckhoff_msgs/preinstall
 preinstall: beckhoff_comm/preinstall
 preinstall: delta_robot/preinstall
@@ -95,6 +99,8 @@ preinstall: geometry2/test_tf2/preinstall
 preinstall: geometry2/tf2_sensor_msgs/preinstall
 preinstall: geometry2/tf2_tools/preinstall
 preinstall: tracks/preinstall
+preinstall: transformacije/transformacije/preinstall
+preinstall: transformations/preinstall
 
 .PHONY : preinstall
 
@@ -110,6 +116,7 @@ clean: geometry2/tf2_msgs/clean
 clean: geometry2/tf2/clean
 clean: geometry2/tf2_bullet/clean
 clean: geometry2/tf2_eigen/clean
+clean: acquire_asparagus/clean
 clean: beckhoff_msgs/clean
 clean: beckhoff_comm/clean
 clean: delta_robot/clean
@@ -123,8 +130,28 @@ clean: geometry2/test_tf2/clean
 clean: geometry2/tf2_sensor_msgs/clean
 clean: geometry2/tf2_tools/clean
 clean: tracks/clean
+clean: transformacije/transformacije/clean
+clean: transformations/clean
 
 .PHONY : clean
+
+#=============================================================================
+# Directory level rules for directory acquire_asparagus
+
+# Recursive "all" directory target.
+acquire_asparagus/all:
+
+.PHONY : acquire_asparagus/all
+
+# Recursive "preinstall" directory target.
+acquire_asparagus/preinstall:
+
+.PHONY : acquire_asparagus/preinstall
+
+# Recursive "clean" directory target.
+acquire_asparagus/clean:
+
+.PHONY : acquire_asparagus/clean
 
 #=============================================================================
 # Directory level rules for directory beckhoff_comm
@@ -690,6 +717,42 @@ tracks/preinstall:
 tracks/clean:
 
 .PHONY : tracks/clean
+
+#=============================================================================
+# Directory level rules for directory transformacije/transformacije
+
+# Recursive "all" directory target.
+transformacije/transformacije/all:
+
+.PHONY : transformacije/transformacije/all
+
+# Recursive "preinstall" directory target.
+transformacije/transformacije/preinstall:
+
+.PHONY : transformacije/transformacije/preinstall
+
+# Recursive "clean" directory target.
+transformacije/transformacije/clean:
+
+.PHONY : transformacije/transformacije/clean
+
+#=============================================================================
+# Directory level rules for directory transformations
+
+# Recursive "all" directory target.
+transformations/all:
+
+.PHONY : transformations/all
+
+# Recursive "preinstall" directory target.
+transformations/preinstall:
+
+.PHONY : transformations/preinstall
+
+# Recursive "clean" directory target.
+transformations/clean:
+
+.PHONY : transformations/clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/doxygen.dir
