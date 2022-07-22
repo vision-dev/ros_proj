@@ -10,7 +10,6 @@
 
 '''
 
-from distutils.command.clean import clean
 import sensor_msgs.point_cloud2 as pc2
 import rospy
 from sensor_msgs.msg import PointCloud2, LaserScan, PointCloud
@@ -19,6 +18,7 @@ import math
 import tf2_ros
 import tf
 import numpy as np
+from collections import namedtuple
 
 rospy.init_node("laserscan_to_pointcloud")
 
@@ -29,9 +29,107 @@ pc_pub = rospy.Publisher("/robot_cloud", PointCloud, queue_size=1)
 
 listener2 = tf.TransformListener()
 
+scan = LaserScan()
 
 
 def scan_cb(msg):
+    scan = msg
+
+    #print('A')
+
+    start_angle = scan.angle_min
+    step_angle  = scan.angle_increment
+    last_angle  = scan.angle_max
+    #print(last_angle)
+
+    filter_angle = math.radians(7)
+    end_angle = start_angle + filter_angle
+
+    current_angle = start_angle
+
+    numOfPoints = 0
+    index_array = []
+
+    
+    start_idx = 0
+    print("")
+    while current_angle <= last_angle:
+        #numOfPoints = 0
+        while current_angle <= end_angle:
+            current_angle = current_angle + step_angle
+            numOfPoints = numOfPoints + 1
+            #print(numOfPoints)
+
+        end_idx = numOfPoints
+        ranges = scan.ranges[start_idx:end_idx]
+        min_idx = np.argmin(ranges)
+        min_idx = min_idx + start_idx
+        
+        #print(min_idx)
+
+        start_idx = numOfPoints
+
+        end_angle = current_angle + filter_angle
+
+        if scan.ranges[min_idx] > 0.1:
+            index_array = np.append(index_array, min_idx)
+        
+    index_array = np.asarray(index_array, dtype=np.uint16)
+    #print(index_array)
+
+    # Transform polar coordinates to cartesian
+    cartesian_coordinates = np.zeros((len(index_array), 3))
+    #cartesian_coordinates = []
+
+    for idx,i in enumerate(index_array):
+        trans_angle = start_angle + i * step_angle
+
+        x = scan.ranges[i] * math.cos(trans_angle)
+        y = scan.ranges[i] * math.sin(trans_angle)
+        z = 0
+
+        #Test = namedtuple('Test',["x", "y", "z"])
+        #test = Test(x=x1, y=y1, z=z1)
+        #test2 = list(test)
+        #print(test2.x)
+
+        #print(scan.ranges[i])
+
+        #cartesian_coordinates = np.append(cartesian_coordinates, [x, y, z])
+        cartesian_coordinates[idx][0] = x
+        cartesian_coordinates[idx][1] = y
+        cartesian_coordinates[idx][2] = z
+
+    print(cartesian_coordinates)
+
+    cartesian_cloud = PointCloud()
+    cartesian_cloud.header.stamp = rospy.Time.now()
+    cartesian_cloud.header.frame_id = 'laser'
+    cartesian_cloud.points = cartesian_coordinates
+
+    transformed_cloud = listener2.transformPointCloud('robot',cartesian_cloud)
+
+    cleaned_points = []
+    # Delete points where x is larger or smaller than our boundries
+    for idx,i in enumerate(transformed_cloud.points):
+        
+        if i.y < -0.23: #or i.y > 0.2:
+            #print(i.x)
+            cleaned_points = np.append(cleaned_points, idx)
+        
+        if i.y > 0.26: #or i.y > 0.2:
+            #print(i.x)
+            cleaned_points = np.append(cleaned_points, idx)
+
+    cleaned_points = cleaned_points.astype(int)
+    print(cleaned_points)
+    
+    transformed_cloud.points = np.delete(transformed_cloud.points, cleaned_points, axis=0)
+
+    pc_pub.publish(transformed_cloud)
+
+
+    '''
     # convert the message of type LaserScan to a PointCloud2
     #pc2_msg = lp.projectLaser(msg) #, channel_options=)
     pc2_msg = msg
@@ -94,9 +192,9 @@ def scan_cb(msg):
     #send_points.points = cleaned_points
 
     pc_pub.publish(transformed_cloud)
-    
+    '''
 
         
-rospy.Subscriber("/cloud", PointCloud2, scan_cb, queue_size=1)
-#rospy.Subscriber("/scan", LaserScan, scan_cb, queue_size=1)
+#rospy.Subscriber("/cloud", PointCloud2, scan_cb, queue_size=1)
+rospy.Subscriber("/scan", LaserScan, scan_cb, queue_size=1)
 rospy.spin()

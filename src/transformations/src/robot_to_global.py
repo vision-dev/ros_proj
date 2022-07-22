@@ -9,11 +9,11 @@ import geometry_msgs.msg
 from tf.transformations import quaternion_from_euler
 
 
-def handle_turtle_pose(msg):
+def robot_to_global(msg):
     br = tf2_ros.TransformBroadcaster()
     t = geometry_msgs.msg.TransformStamped()
 
-    print(msg.x, msg.y)
+    #print(msg.x, msg.y)
 
     t.header.stamp = rospy.Time.now()
     t.header.frame_id = "global"
@@ -31,5 +31,5 @@ def handle_turtle_pose(msg):
 
 if __name__ == '__main__':
     rospy.init_node('tf2_turtle_broadcaster')
-    rospy.Subscriber("/tracks/pose", geometry_msgs.msg.Pose2D, handle_turtle_pose)
+    rospy.Subscriber("/tracks/pose", geometry_msgs.msg.Pose2D, robot_to_global)
     rospy.spin()

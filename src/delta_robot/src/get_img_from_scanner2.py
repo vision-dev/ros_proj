@@ -68,7 +68,7 @@ class get_3D_sensor_img:
 		self.new_point_cloud.header.frame_id = 'global'
 
 		# Save data to array each time track robot move for more than 1 mm
-		if abs(route_x) > 0.001 or abs(route_y) > 0.001:
+		if abs(route_x) > 0.001 or abs(route_y) > 0.0002:
 			self.scanner_cloud = np.append(self.scanner_cloud, self.world_point_cloud.points)
 			#print(self.scanner_cloud)
 			self.new_point_cloud.points = self.scanner_cloud
