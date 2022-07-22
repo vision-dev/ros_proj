@@ -8,6 +8,7 @@ from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 import time
 
+
 # Define publisher
 #print('A')
 rospy.init_node("test2")
@@ -32,6 +33,15 @@ try:
         # Calls to get_frame_data(...) and get_frame_timestamp(...) on a device will return stable values until wait_for_frames(...) is called
         frames = pipeline.wait_for_frames()
         depth = frames.get_depth_frame()
+
+        pc = rs.pointcloud()
+        points = pc.calculate(depth)
+        color = frames.get_color_frame()
+        #print(points[0])
+        pc.map_to(color)
+
+        print(pc)
+
         if not depth: continue
 
         #print(depth)
@@ -42,7 +52,7 @@ try:
 
         end_time = time.time()
 
-        print(depth_image)
+        #print(depth_image)
 
         print(end_time - start_time)
 
