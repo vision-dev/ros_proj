@@ -50,10 +50,8 @@ class get_3D_sensor_img:
 		self.current_point_cloud = data
 
 		# transform data to global CS
-		try:
-			self.world_point_cloud = self.listener.transformPointCloud('global',self.current_point_cloud)
-		except:
-			pass
+		self.world_point_cloud = self.listener.transformPointCloud('global',self.current_point_cloud)
+
 
 		if self.save_poz == False:
 			self.saved_track_pose = self.track_pose
@@ -68,10 +66,11 @@ class get_3D_sensor_img:
 		self.new_point_cloud.header.frame_id = 'global'
 
 		# Save data to array each time track robot move for more than 1 mm
-		if abs(route_x) > 0.001 or abs(route_y) > 0.0002:
+		if abs(route_x) > 0.001 or abs(route_y) > 0.001:
 			self.scanner_cloud = np.append(self.scanner_cloud, self.world_point_cloud.points)
 			#print(self.scanner_cloud)
-			self.new_point_cloud.points = self.scanner_cloud
+			scanner_cloud_reversed = self.scanner_cloud[::-1]
+			self.new_point_cloud.points = scanner_cloud_reversed
 
 			#print(self.new_point_cloud.points)
 

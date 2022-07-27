@@ -42,7 +42,7 @@ def scan_cb(msg):
     last_angle  = scan.angle_max
     #print(last_angle)
 
-    filter_angle = math.radians(7)
+    filter_angle = math.radians(0)
     end_angle = start_angle + filter_angle
 
     current_angle = start_angle
@@ -100,7 +100,7 @@ def scan_cb(msg):
         cartesian_coordinates[idx][1] = y
         cartesian_coordinates[idx][2] = z
 
-    print(cartesian_coordinates)
+    #print(cartesian_coordinates)
 
     cartesian_cloud = PointCloud()
     cartesian_cloud.header.stamp = rospy.Time.now()
@@ -108,16 +108,18 @@ def scan_cb(msg):
     cartesian_cloud.points = cartesian_coordinates
 
     transformed_cloud = listener2.transformPointCloud('robot',cartesian_cloud)
+    #print(transformed_cloud.points)
 
+    
     cleaned_points = []
     # Delete points where x is larger or smaller than our boundries
     for idx,i in enumerate(transformed_cloud.points):
         
-        if i.y < -0.23: #or i.y > 0.2:
+        if i.y < -0.20: #or i.y > 0.2:
             #print(i.x)
             cleaned_points = np.append(cleaned_points, idx)
         
-        if i.y > 0.26: #or i.y > 0.2:
+        if i.y > 0.20: #or i.y > 0.2:
             #print(i.x)
             cleaned_points = np.append(cleaned_points, idx)
 
@@ -125,6 +127,7 @@ def scan_cb(msg):
     print(cleaned_points)
     
     transformed_cloud.points = np.delete(transformed_cloud.points, cleaned_points, axis=0)
+    
 
     pc_pub.publish(transformed_cloud)
 
