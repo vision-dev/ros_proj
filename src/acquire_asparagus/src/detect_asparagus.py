@@ -19,6 +19,8 @@ import tf2_ros
 import tf
 import numpy as np
 import time
+import matplotlib.pyplot as plt
+
 
 class detect_asparagus:
 	def __init__(self, topic, z_par, y_limit):
@@ -49,13 +51,22 @@ class detect_asparagus:
 
 		self.listener = tf.TransformListener()
 
+		self.xyz = np.array([[0,0,0]])
+		self.asparagus_points_arr = np.array([[0,0,0]])
+
+		self.start_search = False
+
 	def callback_track_pose(self, data):
 		self.track_pose = data
 
 	def callback_pointcloud(self, data):
 		self.pointcloud = data.points
 
+		# Cut points if y and z direction
 		asparagus_points = self.find_z_points()
+
+		if len(asparagus_points) > 0:
+			self.point_histogram(asparagus_points, 0.02, 0.02, 20)
 
 		robot_points = PointCloud()
 		robot_points.header.stamp = rospy.Time.now()
@@ -67,202 +78,150 @@ class detect_asparagus:
 		self.pub.publish(robot_points)
 
 	def find_z_points(self):
-		# Start search for points at start z poz
-		z_search = self.min_z #self.start_z
+		
+		asparagus_points = []
 
-		first_point = True
+		# Go through all points
+		for i in self.pointcloud:
+			# Check only for points there limited by Y cooridinate (to eliminate tracks)
+			if i.y > self.y_minus_limit and i.y < self.y_plus_limit:
+				# Search for point at specified Z range
+				if i.z > self.min_z:
+					if i.z < 0.10:
+						asparagus_points = np.append(asparagus_points, i)
 
-		# Max number of center points
-		max_num_of_point_groups = 50
-		max_num_of_points = 100 #(self.start_z - self.min_z) / self.step_z
-		num_of_steps = (self.start_z - self.min_z) / self.step_z
-		num_of_steps = int(num_of_steps)
-		#print(num_of_steps)
-		max_num_of_points = int(max_num_of_points)
-		center_point = np.zeros((max_num_of_point_groups,2))
-		pointArr = np.zeros((max_num_of_point_groups, max_num_of_points, 3))
-		current_point =np.zeros(max_num_of_point_groups)
+		return asparagus_points
 
-		points_in_range = np.zeros(max_num_of_point_groups)
+	def point_histogram(self, asparagus_points, dx, dy, min_points):
+		# Transform data to np.array
+		for idx,i in enumerate(self.pointcloud):
+			if idx == 0:
+				self.xyz = [[i.x,i.y,i.z]]
+			else:
+				self.xyz = np.append(self.xyz,[[i.x,i.y,i.z]], axis = 0)
 
-		# calculate number of points of asparagus based on step_z size
-		numOfSteps = (self.start_z - self.min_z) / self.step_z
-		asparagus_points = []#np.zeros((10, int(numOfSteps)))
-		#print(numOfSteps)
+		# Create a grid matrix for z values
+		min_val = np.min(self.xyz, axis=0)
+		#print(min_val)
+		max_val = np.max(self.xyz, axis=0)
 
-		current_z_step = 0
-		numOfAsparagus = 0
-		test = 0
+		num_of_steps_x = int(np.ceil((max_val[0] - min_val[0]) / dx))
+		num_of_steps_y = int(np.ceil((self.y_plus_limit - self.y_minus_limit) / dy))
 
-		point_in  = 0
-		point_out = 0
+		x_bins = np.linspace(min_val[0], max_val[0], num_of_steps_x)
+		y_bins = np.linspace(self.y_minus_limit, self.y_plus_limit , num_of_steps_y)
 
-		# Search for points inside a difined circle. Start search at defined start Z height and go down in steps to min Z height
+
+		grid = np.zeros((num_of_steps_x, num_of_steps_y))
+
+		# Check in which field are points
+		x1 = []
+		y1 = []
+		for i in asparagus_points:
+			x = i.x - min_val[0]
+			y = i.y - min_val[1]
+
+			x1 = np.append(x1, i.x)
+			y1 = np.append(y1, i.y)
+
+			field_x = int(np.floor(x / dx))
+			field_y = int(np.floor(y / dy))
+
+			grid[field_x, field_y] = grid[field_x, field_y] + 1
+
+			#print("x = ", field_x, "y = ", field_y)
+			#print(grid[field_x, field_y])
+		
+		#print(grid)
+		grid = np.transpose(grid)
+		
+
+		#np.save("grid", grid)
+
+		fig, ax = plt.subplots(figsize =(10, 7))
+		# Creating plot
+		h, xedges, yedges, img = plt.hist2d(x1, y1, bins =[x_bins, y_bins], cmin=min_points)
+		#print(xedges)
+		#print(yedges)
+		#print(h.shape)
+		#h, xedges, yedges = np.histogram2d(x1, y1, bins =[x_bins, y_bins])
+
+		
+		try:
+			#hist = np.where(h < min_points, 0, h)
+			x_idx, y_idx = np.where(h >= min_points)
+			#print("x_idx = ", x_idx, "y_idx = ", y_idx)
+			
+			# Find boxes where maximus are present
+			num_of_asparagus = len(x_idx)
+			limit_array = np.zeros((num_of_asparagus, 4))
+
+			for i in range(num_of_asparagus):
+				# Lower limit in x direction
+				limit_array[i,0] = xedges[x_idx[i]]
+				# Upper limit in x direction
+				limit_array[i,1] = xedges[x_idx[i]+1]
+				# Lower limit in y direction
+				limit_array[i,2] = yedges[y_idx[i]]
+				# Upper limit in y direction
+				limit_array[i,3] = yedges[y_idx[i]+1]
+
+			print(limit_array)
+		except:
+			pass
+		
+
+		
+		#plt.plot(hist)
+
+
+
+		#hist, xedges, yedges = np.histogram2d(x1, y1, bins =[x_bins, y_bins])
+		#print("h = ", h)
+		#print("img = ", img)
+		#print("Bars = ", bars)
+
+		#plt.hexbin(x1, y1, bins =[x_bins, y_bins])
+		plt.title("Histogram of Z coordinates")
+
+		# Adding color bar
+		plt.colorbar()
+		
+		ax.set_xlabel('X-axis') 
+		ax.set_ylabel('Y-axis') 
+		
+		# show plot
+		plt.tight_layout() 
+		plt.savefig("Test")
+
+	def circle_algorithm(self, asparagus_points):
+		# Start searching for points in defined Z range
+
+		# Find heighest point in array
+		# Transform data to np.array
+		for idx,i in enumerate(asparagus_points):
+			if idx == 0:
+				self.asparagus_points_arr = [[i.x,i.y,i.z]]
+			else:
+				self.asparagus_points_arr = np.append(self.asparagus_points_arr,[[i.x,i.y,i.z]], axis = 0)
+
+		# Create a grid matrix for z values
+		max_val = np.max(self.asparagus_points_arr, axis=0)		
+
+		if max_val[2] >= self.start_z:
+			self.start_search = True
+		else:
+			self.start_search = False
+
+		# Init par
+		z_search = self.min_z
+
 		while z_search > self.min_z:
 			#print("z_search = ", z_search)
 
 			# Set limits in Z direction where we are searching for points inside of current step
 			z_up_limit = z_search + (self.step_z) / 2
 			z_down_limit = z_search - (self.step_z) / 2
-
-			idx = 0
-			center_point_set = np.zeros(max_num_of_point_groups)
-
-			
-
-			#print(self.pointcloud)
-
-			# Go through all points
-			for i in self.pointcloud:
-				point_in_circle = False
-				# Check only for points there limited by Y cooridinate (to eliminate tracks)
-				if i.y > self.y_minus_limit and i.y < self.y_plus_limit:
-					# Search for point at specified Z range
-					if i.z > z_down_limit and i.z < z_up_limit:
-						#asparagus_points = np.append(asparagus_points, i)
-						test = test + 1
-						#print(test)
-
-						
-						# Find all asparagus at start z height
-						if first_point:
-							numOfAsparagus = 1
-
-						# Search inside all defined circles
-						for j in range(numOfAsparagus):
-							#print(j)
-							#print(numOfAsparagus)
-							
-							max_points_in_range = int(max_num_of_points / num_of_steps)
-							#print("Center = ", center_point[j])
-							# Search in circle
-							if (i.x - center_point[j][0])**2 + (i.y - center_point[j][1])**2 < self.search_radius**2 or first_point:
-								
-								
-								#print("Point in circle = ", i)
-
-								point_in = point_in + 1
-
-
-								point_in_circle = True
-
-								if points_in_range[j] < max_points_in_range:
-									# Check how many points are in defined range
-									points_in_range[j] = points_in_range[j] + 1
-									# Save data to array
-									index = int(current_point[j])
-									#print(index)
-									pointArr[j][index][0] = i.x
-									pointArr[j][index][1] = i.y
-									pointArr[j][index][2] = i.z
-									current_point[j] = current_point[j] + 1
-								
-								if center_point_set[j] == 0:
-									center_point_set[j] = 1
-									asparagus_points = np.append(asparagus_points, i)
-								#print(len(asparagus_points))
-
-								if first_point:
-									first_point = False
-									# Set search range for next point
-									
-									center_point[0][0] = i.x
-									center_point[0][1] = i.y
-								
-								continue
-									
-						
-						if point_in_circle == False:
-							point_out = point_out + 1
-							# Define a new circle
-							#center_point[numOfAsparagus][0] = i.x
-							#center_point[numOfAsparagus][1] = i.y
-
-							#print(center_point[:10])
-							
-							numOfAsparagus = numOfAsparagus + 1
-								
-						
-						'''
-						if point_in_circle == False and first_point == False:
-							# Save new center point
-							if numOfAsparagus < max_num_of_point_groups:
-								center_point[numOfAsparagus][0] = i.x
-								center_point[numOfAsparagus][1] = i.y
-
-								#print(center_point[:10])
-								
-								numOfAsparagus = numOfAsparagus + 1
-						'''
-							
-
-						
-						
-			
-			
-			z_search = z_search + self.step_z
-			center_point_set = np.zeros(max_num_of_point_groups)
-			points_in_range = np.zeros(max_num_of_point_groups)
-			current_z_step = current_z_step + 1
-			#break
-
-		print("Num point in  = ", point_in)	
-		print("Num point out  = ", point_out)	
-		print("Num of asparagus  = ", numOfAsparagus)	
-		print("Center = ", center_point)
-		
-		#print(asparagus_points)
-
-		'''
-		#print("Num of detected = ", numOfAsparagus)
-		#print(pointArr[0])
-		#print(current_point)
-		#final_points = []
-		multi_point_idx = []
-		numOfPointsTotal = 0
-		
-		for idx,i in enumerate(pointArr):
-			if current_point[idx] > 15:
-				#print(current_point[idx])
-				multi_point_idx = np.append(multi_point_idx, idx)
-
-		if len(multi_point_idx) > 0:
-			most_points_idx = np.argmax(multi_point_idx)
-			print(pointArr[most_points_idx])
-			final_points = pointArr[int(multi_point_idx[most_points_idx])][0]
-
-			
-			for i in range(len(multi_point_idx)-1):
-				idx = multi_point_idx[i+1]
-				for j in pointArr[int(idx)]:
-					if j[0] != 0:
-						numOfPointsTotal = numOfPointsTotal +1
-						final_points = np.vstack((final_points, j))
-			
-
-			#idx = multi_point_idx[i+1]
-			for j in pointArr[most_points_idx]:
-				if j[0] != 0:
-					numOfPointsTotal = numOfPointsTotal +1
-					final_points = np.vstack((final_points, j))
-
-			#print(final_points)
-
-		#print(len(final_points))
-		
-		asparagus_points = asparagus_points[:(numOfPointsTotal+1)]
-		try:
-			for idx, i in enumerate(final_points):
-				asparagus_points[idx].x = i[0]
-				asparagus_points[idx].y = i[1]
-				asparagus_points[idx].z = i[2]
-		except:
-			pass
-		#print(asparagus_points)
-
-		'''
-		return asparagus_points
-
 
 
 if __name__ == "__main__":
