@@ -1,0 +1,482 @@
+#!/usr/bin/env python3
+
+from tkinter.tix import Tree
+from webbrowser import Elinks
+import rospy
+from rospy.numpy_msg import numpy_msg
+from rospy_tutorials.msg import Floats
+from geometry_msgs.msg import Pose2D
+from beckhoff_msgs.msg import JointStateRobot
+import numpy as np
+import math
+import time
+
+from supportingFunctions.inverseKinematics_Phi import deltaInverseKin
+
+class motion_planning:
+	def __init__(self, xy_limits, z_start=0.32):
+		# Read parameters
+		self.x_min_limit = xy_limits[0]
+		self.x_max_limit = xy_limits[1]
+		self.y_min_limit = xy_limits[2]
+		self.y_max_limit = xy_limits[3]
+
+		self.z_start = z_start
+		
+		rospy.init_node("motion_planning")
+		# Subscribe to asparagus locations in global cs
+		rospy.Subscriber("/aspragus_locations", numpy_msg(Floats), self.callback_aspragus_locations, queue_size=10)
+		# Subcribe to track robot pose
+		rospy.Subscriber("/tracks/pose", Pose2D, self.callback_track_pose)
+		# Read angles of delta robot motors
+		#rospy.Subscriber(self.topicName_delta_from_plc, JointStateRobot, self.callback_robot_angles)
+
+		self.track_pose = Pose2D()
+
+		self.cold_start = True
+
+		self.picked_asparagus = []
+		
+		# State machine for path planning
+		self.step_path = 0
+		self.path_calculated = False
+		# State machine for motion control
+		self.home_poz = [-200, 0, self.z_start, 0]
+		self.set_poz = np.copy(self.home_poz)
+		self.step_motion = 0
+		# Time gripper needs to close
+		self.gripper_time = 1
+		# Set place position for asparagus
+		self.place_poz = [[0, 0.2, 0.1, 0], [0, -0.2, 0.1, 0]]
+		self.new_path_request = True
+
+	
+	def callback_track_pose(self, data):
+		self.track_pose = data
+
+	def callback_robot_angles(self, data):
+		self.qq = [data.qq.j0, data.qq.j1, data.qq.j2, data.qq.j3, data.qq.j4]
+		self.qq = np.asarray(self.qq, dtype=np.float32)
+
+	def callback_aspragus_locations(self, data):
+		self.asparagus_locations = data.data
+		self.asparagus_locations = np.asarray(self.asparagus_locations)
+
+		# Transform data from 1D array to 2D array
+		
+		self.asparagus_locations = np.reshape(self.asparagus_locations, (-1,4))
+		#print(self.asparagus_locations)
+		# Filter points that are inside work space of a delta robot
+		self.locations_out_of_range(self.asparagus_locations)
+		# Plan path for robot
+		if self.new_path_request:
+			self.path_planning(min_dist=0.05, pretarget_dist=0.15, calculation_step=0.01)
+
+		# Start robot motion
+		self.robot_motion()
+
+	def locations_out_of_range(self, asparagus_locations):
+		# Transform locations from global cs to robot cs and delete points that robot can't reach (out of range)
+		delete_idx = []
+		self.asparagus_locations_robot_cs = np.copy(asparagus_locations)
+		for idx, i in enumerate(asparagus_locations):
+			x_trans = self.track_pose.x * math.cos(self.track_pose.theta)
+			y_trans = self.track_pose.y * math.sin(self.track_pose.theta)
+
+			# Transform points from global cs to robot cs
+			x_robot_cs = i[0] - x_trans
+			y_robot_cs = i[1] - y_trans
+
+			self.asparagus_locations_robot_cs[idx][0] = x_robot_cs
+			self.asparagus_locations_robot_cs[idx][1] = y_robot_cs
+
+			# Check for limits in x direction
+			if x_robot_cs < self.x_min_limit or x_robot_cs > self.x_max_limit:
+				# Check for limits in y direction
+				if y_robot_cs < self.y_min_limit or y_robot_cs > self.y_max_limit:
+					delete_idx = np.append(delete_idx, idx)
+
+		# Delete points that are out of range
+		if len(delete_idx) > 0:
+			self.cleaned_locations = np.delete(self.asparagus_locations, delete_idx)
+			self.cleaned_locations_robot_cs = np.delete(self.asparagus_locations_robot_cs, delete_idx)
+		else:
+			self.cleaned_locations = self.asparagus_locations
+			self.cleaned_locations_robot_cs = self.asparagus_locations_robot_cs
+
+		# Check if picked asparagus are out of range
+		delete_idx = []
+		if len(self.picked_asparagus) > 0:
+			for idx, i in enumerate(self.picked_asparagus):
+				x_trans = self.track_pose.x * math.cos(self.track_pose.theta)
+				y_trans = self.track_pose.y * math.sin(self.track_pose.theta)
+
+				# Transform points from global cs to robot cs
+				x_robot_cs = i[0] - x_trans
+				y_robot_cs = i[1] - y_trans
+
+				# Check for limits in x direction
+				if x_robot_cs < self.x_min_limit or x_robot_cs > self.x_max_limit:
+					# Check for limits in y direction
+					if y_robot_cs < self.y_min_limit or y_robot_cs > self.y_max_limit:
+						delete_idx = np.append(delete_idx, idx)
+
+		# Delete points that are out of range
+		if len(delete_idx) > 0:
+			self.picked_asparagus = np.delete(self.picked_asparagus, delete_idx)
+
+
+	def robot_in_position(self, desired_angle, actual_angle, angle_error):
+		# Check if delta robot reached desired position
+		# Transform desired angle to deegres
+		desired_angle_deg = math.degrees(desired_angle)
+		# Calculate error
+		e = desired_angle_deg - actual_angle
+		
+		# Check if each joint reached desired angle
+		poz_reached = np.full((len(e)), False)
+		for idx,i in enumerate(e):
+			if abs(i) < angle_error[idx]:
+				poz_reached[idx] = True
+			else:
+				poz_reached[idx] = False
+
+		# Check if all joints reached desired position
+		return np.all(poz_reached == True)
+
+	def path_planning(self, min_dist, pretarget_dist, calculation_step):
+		'''
+
+		Plan delta robot path, based on number of asparagus detected and their locations
+
+		'''
+		
+		# Check how many asparagus are detected
+		self.num_of_asparagus = len(self.cleaned_locations)
+
+		if self.step_path == 0:
+			# init parameters
+			self.pick_idx = 0
+			self.ready_for_pick = False
+			self.grow_poz = np.zeros(3)
+			self.asparagus_too_close = np.full(self.num_of_asparagus, False)
+			# Angle a which we are trying to generate picking trajectory
+			self.try_angle = 0
+			self.gripper_poz = np.zeros(4)
+
+			self.step_path = 0.5
+
+		elif self.step_path == 0.5:
+			# Check which asparagus were already harvested
+			self.picked_asparagus_flag_arr = np.full(self.num_of_asparagus, False)
+			if len(self.picked_asparagus) > 0:
+				self.pick_dist_array = np.zeros((len(self.picked_asparagus), self.num_of_asparagus))
+				for idx, i in enumerate(self.picked_asparagus):
+					for idx2, j in enumerate(self.cleaned_locations):
+						dist = np.linalg.norm(j[:3] - i[:3])
+						self.pick_dist_array[idx, idx2] = dist
+
+				# Find minimum distances
+				for i in self.pick_dist_array:
+					min_dist_measured = min(i)
+					if min_dist_measured < 0.02:
+						min_idx =np.argmin(i)
+						self.picked_asparagus_flag_arr[min_idx] = True
+
+			self.step_path = 1
+
+		elif self.step_path == 1:
+			# Check asparagus height
+			for idx, i in enumerate(self.cleaned_locations):
+				# 4th element in array represents if asparagus is ready for harvesting (is high enough)
+				# Check if asparagus are too close and if asparagus was already picked
+				if i[3] and self.asparagus_too_close[idx] == False and self.picked_asparagus_flag_arr[idx] == False:
+					self.pick_idx = idx
+					self.ready_for_pick = True
+					self.grow_poz = i[:3]
+
+					# Go to next step 
+					self.step_path = 2
+
+					break
+
+			if self.ready_for_pick == False:
+				self.step_path = 0
+		 
+		elif self.step_path == 2:
+			# Check if any asparagus grows nearby
+			# Calculate distances to all other asparagus
+			self.dist_array = np.zeros(self.num_of_asparagus)
+			for idx, i in enumerate(self.cleaned_locations):
+				if idx != self.pick_idx:
+					dist = np.linalg.norm(self.grow_poz - i[:3])
+					self.dist_array[idx] = dist
+				else:
+					self.dist_array[idx] = 0
+
+			self.step_path = 3
+
+		elif self.step_path == 3:
+			# Check if distance is smaller than minimum distance based on the size of the gripper
+			for idx, i in enumerate(self.dist_array):
+				if i != 0 and i < min_dist:
+					# Picking not posible
+					self.asparagus_too_close[idx] = True
+					self.asparagus_too_close[self.pick_idx] = True
+					
+					# Check if we can pick other asparagus
+					self.step_path = 1
+
+					break
+				else:
+					self.step_path = 4
+		
+		elif self.step_path == 4:
+			# Check if there is any obstacle (small aspragus, tracks) inside larger radius
+			
+			# Try picking from behind at 0 degree angle
+			# Check if there is enough space behind asparagus, else try different direction
+			# We already checked at pick position if there is space for gripper, now we go in -x direction
+			self.grow_poz_robot_cs = self.cleaned_locations_robot_cs[self.pick_idx][:3]
+			# Current gripper poz
+			self.gripper_poz[:3] = self.grow_poz_robot_cs[:3]
+			self.gripper_poz[3]  = self.try_angle
+
+			self.obsticle_on_path = False
+			self.gripper_dist_array = np.zeros(self.num_of_asparagus)
+
+			current_pretarget_dist = np.linalg.norm(self.grow_poz_robot_cs - self.gripper_poz[:3])
+			while current_pretarget_dist <= pretarget_dist:
+				# Calculate distance between gripper and other asparagus and tracks
+				for idx, i in enumerate(self.cleaned_locations_robot_cs):
+					if idx != self.pick_idx:
+						dist = np.linalg.norm(self.gripper_poz[3] - i[:3])
+						self.gripper_dist_array[idx] = dist
+					else:
+						self.gripper_dist_array[idx] = 0
+			
+				if self.gripper_poz[1] >= 0:
+					self.track_dist = abs(self.y_max_limit - self.gripper_poz[1])
+				else:
+					self.track_dist = abs(self.y_min_limit - self.gripper_poz[1])
+
+				# Calculate distance to -x limit
+				self.dist_to_x_limit = abs(self.x_min_limit - self.gripper_poz[0])
+
+				# Check if all dist are larger than min dist
+				if self.num_of_asparagus > 1:
+					for i in self.gripper_dist_array:
+						if i > min_dist and i != 0:
+							self.dist_to_asparagus_ok = True
+						elif i <= min_dist and i != 0:
+							self.dist_to_asparagus_ok = False
+							break
+				else:
+					self.dist_to_asparagus_ok = True
+
+				if self.track_dist > min_dist:
+					self.dist_tracks_ok = True
+				else:
+					self.dist_tracks_ok = False
+
+				if self.dist_to_x_limit > min_dist:
+					self.dist_x_ok = True
+				else:
+					self.dist_x_ok = False
+
+				# Check if all conditions are true
+				if self.dist_to_asparagus_ok and self.dist_tracks_ok and self.dist_x_ok:
+					# go to next point
+					self.gripper_poz[0] = self.gripper_poz[0] - calculation_step * math.cos(math.radians(self.try_angle))
+					self.gripper_poz[1] = self.gripper_poz[1] - calculation_step * math.sin(math.radians(self.try_angle))
+					current_pretarget_dist = np.linalg.norm(self.grow_poz_robot_cs - self.gripper_poz[:3])
+				else:
+					self.obsticle_on_path = True
+					break
+
+			if self.obsticle_on_path == False:
+				# Add points to path
+				# Start poz is with z up
+				angle_rad = math.radians(self.try_angle)
+				start_point = [self.gripper_poz[0], self.gripper_poz[1], self.z_start, angle_rad]
+				x_avg = (self.gripper_poz[0] + self.grow_poz_robot_cs[0]) / 2
+				y_avg = (self.gripper_poz[1] + self.grow_poz_robot_cs[1]) / 2
+				intermedian_point = [x_avg, y_avg, self.grow_poz_robot_cs[2], angle_rad]
+				pick_point = [self.grow_poz_robot_cs[0], self.grow_poz_robot_cs[1], self.grow_poz_robot_cs[2], angle_rad]
+				
+				self.path = [start_point, intermedian_point, pick_point]
+
+				self.step_path = 5
+				
+			else:
+				self.path = []
+			print('path = ', self.path)
+
+	
+		elif self.step_path == 5:
+			# Transform points back to global cs
+			self.path_global_cs = np.copy(self.path)
+			for idx, i in enumerate(self.path):
+				x_trans = self.track_pose.x * math.cos(self.track_pose.theta)
+				y_trans = self.track_pose.y * math.sin(self.track_pose.theta)
+
+				# Transform points from global cs to robot cs
+				self.path_global_cs[idx][0] = i[0] + x_trans
+				self.path_global_cs[idx][1] = i[1] + y_trans
+
+			self.step_path = 6
+			
+			print('global path = ', self.path_global_cs)
+
+		elif self.step_path == 6:
+			self.new_path_request = False
+			self.path_calculated = True
+	
+	def robot_motion(self):
+		
+		# Calculate desired angles in robot axis
+		angle_error = [0.5, 0.5, 0.5, 1]
+
+		if self.step_motion == 0:
+			self.robot_in_poz = False
+			self.path_idx = 0
+			# Check if path was already calculated, else go to home position
+			if self.path_calculated:
+				self.step_path = 2
+			else:
+				self.set_poz = self.home_poz
+				self.step_path = 1
+
+		elif self.step_motion == 1:
+			# Check if we reached home position
+			qd_radians, _ = deltaInverseKin(self.set_poz[0], self.set_poz[1], self.set_poz[2], self.set_poz[3])
+			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
+			if self.robot_in_poz:
+				self.robot_in_poz = False
+				self.step_motion = 2
+
+		elif self.step_motion == 2:
+			# Wait for path to be calculated
+			if self.path_calculated:
+				self.step_motion = 3
+
+		elif self.step_motion == 3:
+			# Transform path points to robot cs
+			x_trans = self.track_pose.x * math.cos(self.track_pose.theta)
+			y_trans = self.track_pose.y * math.sin(self.track_pose.theta)
+
+			# Transform points from global cs to robot cs
+			x_robot_cs = self.path_global_cs[self.path_idx][0] - x_trans
+			y_robot_cs = self.path_global_cs[self.path_idx][1] - y_trans
+			
+			# Send robot to path point
+			self.set_poz = [x_robot_cs, y_robot_cs, self.path_global_cs[self.path_idx][2], self.path_global_cs[self.path_idx][3]]
+
+			qd_radians, _ = deltaInverseKin(self.set_poz[0], self.set_poz[1], self.set_poz[2], self.set_poz[3])
+			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
+
+			if self.robot_in_poz:
+				self.robot_in_poz = False
+				self.path_idx = self.path_idx + 1
+
+				self.step_motion = 4
+
+		elif self.step_motion == 4:
+			# Check if we are at the last point (pick point)
+			if self.path_idx >= len(self.path_global_cs):
+				# Start time measurement
+				self.start_gripper_closing = time.time()
+
+				self.step_motion = 5
+			else:
+				self.step_motion = 3
+
+		elif self.step_motion == 5:
+			# Hold pick position and close the gripper
+			# Transform first path point to robot cs
+			x_trans = self.track_pose.x * math.cos(self.track_pose.theta)
+			y_trans = self.track_pose.y * math.sin(self.track_pose.theta)
+
+			# Transform points from global cs to robot cs
+			x_robot_cs = self.path_global_cs[-1][0] - x_trans
+			y_robot_cs = self.path_global_cs[-1][1] - y_trans
+			
+			# Send robot to path point
+			self.set_poz = [x_robot_cs, y_robot_cs, self.path_global_cs[-1][2], self.path_global_cs[-1][3]]
+
+			qd_radians, _ = deltaInverseKin(self.set_poz[0], self.set_poz[1], self.set_poz[2], self.set_poz[3])
+			
+			elapsed_time = time.time() - self.start_gripper_closing
+
+			if elapsed_time > self.gripper_time:
+				# Save position of picked asparagus
+				self.picked_asparagus = np.append(self.picked_asparagus, self.path_global_cs[-1])
+				self.path_calculated = False
+				self.new_path_request = True
+
+				self.step_motion = 6
+		
+		elif self.step_motion == 6:
+			# Send gripper up
+			# Transform first path point to robot cs
+			x_trans = self.track_pose.x * math.cos(self.track_pose.theta)
+			y_trans = self.track_pose.y * math.sin(self.track_pose.theta)
+
+			# Transform points from global cs to robot cs
+			x_robot_cs = self.path_global_cs[-1][0] - x_trans
+			y_robot_cs = self.path_global_cs[-1][1] - y_trans
+			
+			# Send robot to path point
+			self.set_poz = [x_robot_cs, y_robot_cs, self.z_start, self.path_global_cs[-1][3]]
+
+			qd_radians, _ = deltaInverseKin(self.set_poz[0], self.set_poz[1], self.set_poz[2], self.set_poz[3])
+
+			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
+
+			if self.robot_in_poz:
+				self.robot_in_poz = False
+
+				self.step_motion = 7
+
+		elif self.step_motion == 7:
+			# Go to place position
+			# Check y coordinate of the gripper -> go to closer storage
+			if self.set_poz[1] >= 0:
+				# Go to left storage
+				self.storage_idx = 0
+			else:
+				# Go to right storage
+				self.storage_idx = 1
+
+			self.set_poz = self.place_poz[self.storage_idx]
+				
+			qd_radians, _ = deltaInverseKin(self.set_poz[0], self.set_poz[1], self.set_poz[2], self.set_poz[3])
+
+			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
+
+			if self.robot_in_poz:
+				self.robot_in_poz = False
+				self.start_gripper_opening = time.time()
+
+				self.step_motion = 8
+
+		elif self.step_motion == 8:
+			# Open gripper
+			elapsed_time = time.time() - self.start_gripper_opening
+
+			if elapsed_time > self.gripper_time:
+				self.step_motion = 9
+
+		elif self.step_motion == 9:
+			# Check if next path is available, else go to home position
+			self.step_motion = 0
+
+
+if __name__ == "__main__":
+	# Call class
+	
+
+	xy_limits = [-0.3, 0.3, -0.3, 0.3]
+
+	path_planning = motion_planning(xy_limits=xy_limits)
+	rospy.spin()

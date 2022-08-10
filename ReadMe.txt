@@ -50,5 +50,41 @@ Zagon intel realsense v ros: "roslaunch realsense2_camera rs_camera.launch"
 Pretvorba iz koordinatnega sistema realsense kamere v ks robota: "rosrun transformations sensor_to_robot.py camera_depth_optical_frame 0.75 0.1 0.4 2.37 0 -1.57"
 Shranjevanje podatkov z rosbag: "rosbag record -O L515_global_points.bag --duration=10 /intel_l515_global_cloud"
 
+**** 27.07.22 ****
+Filter za laserski skener: http://wiki.ros.org/laser_filters/Tutorials/Laser%20filtering%20using%20the%20filter%20nodes
+
+**** 29.07.22 ****
+
+Iskanje točk pobiranja iz rosbag datoteke. Uporabljamo linijski laserski skener Sick lms111
+
+1) Zaženemo "roscore"
+2) Zaženemo "rosrun transformations sensor_to_robot.py laser 0.7 0.05 0.5 0 2.36 0", da transformiramo koordinatni sistem iz skenerja v koordinatni sistem robota
+3) Zaženemo "rosrun transformations robot_to_global.py", da transformiramo koordinatni sistem robota v globalni (fiksni) koordinatni sistem. Za transformacijo se upoštevajo podatki z odometrije vozička.
+4) Zaženemo "rosrun acquire_asparagus sick_scanner.py". V tem programu beremo podatke iz senzorja, jih pretvarjamo v koordinatni sistem robota in v tem koordinatnem sistemu jih obrežemo po Y osi, da odstranimo gosenice iz vidnega polja.
+5) Zaženemo "rosrun acquire_asparagus sick_get_global_cloud.py". Ta program zlaga 3D model iz linijskih točk, ko se voziček premika.
+6) Zaženemo "rosrun acquire_asparagus detect_asparagus.py". Ta program bere globalni point cloud. Najprej odrežemo vse točke, ki predstavljajo tla in vse točke, ki so višje recimo od 10 cm. Tako dobimo točke, kjer se šparglji dotikajo tal. Sledi korak iskanje 2D histograma. Naše območje med gosenicami razdelimo na polja in v vsakem polju pogledamo število točk. V tistih poljih, kjer je število točk največje predvidevamo, da se nahaja špargelj. Znotraj vsakega polja, kjer je določeno število točk poiščemo mediano točk po x in po y. To storimo za vsa polja, ki imajo število točk nad mejo. Znotraj polja pogledamo tudi, če so koordinate po Z blizu tal. Tako določimo ali se tam špargelj dotika tal. V naslednjem koraku poiščemo ali je špargelj dovolj visok za obiranje. To storimo tako, da iščemo visoke točke (z koordinata) znotraj kroga, kjer se šparglji dotikajo tal. V zadnjem koraku določimo še točke pobiranja, ki so določene na fiksni Z višini.
+7) Za testiranje lahko zaženemo rosbag datoteko "rosbag play scan_2.bag"
+
+
+**** 08.08.22 ****
+
+Kaj je potrebno upoštevati pri planiranju poti robota:
+- Kateri šparglji so znotraj delovnega območja robota.
+- Kateri šparglji so bili prvi zaznani (tiste je potrebno najprej pobrati)
+- Višino šparglja
+- Ali raste več špargljev v bližini (prilagajanje kota pobiranja)
+- Ali je kakšen manjši špargelj ovira gibanje robota
+- Prijemalo robota simuliramo s krogom (gledamo, če je znotraj kroga kakšen špargelj ovira)
+
+Postopek pobiranja:
+
+
+
+
+
+
+
+
+
 
 

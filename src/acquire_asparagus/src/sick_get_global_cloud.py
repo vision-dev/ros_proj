@@ -18,6 +18,7 @@ from geometry_msgs.msg import TransformStamped
 from tf.transformations import quaternion_from_euler
 import tf
 from tf2_ros import TransformBroadcaster
+import time
 
 class get_3D_sensor_img:
 	def __init__(self):
@@ -29,7 +30,7 @@ class get_3D_sensor_img:
 		# Get 3D point cloud from sick sensor in world CS
 		rospy.Subscriber("/robot_cloud", PointCloud, self.get_world_point_cloud)
 		self.current_point_cloud = PointCloud()
-		self.scanner_cloud = []
+		self.scanner_cloud_points = []
 		self.world_point_cloud = PointCloud()
 		self.save_start_poz = False
 		self.new_point_cloud = PointCloud()
@@ -41,19 +42,23 @@ class get_3D_sensor_img:
 		# Initialize the transform broadcaster
 		self.br = tf.TransformBroadcaster()
 
+		# Define max array length
+		self.max_array_len = 80
+		self.num_of_points_arr = np.zeros(self.max_array_len)
+		self.arr_idx = 0
+
 	def read_track_pose(self, data):
 		self.track_pose = data
 
 	def get_world_point_cloud(self, data):
+		#start_time = time.time()
+
 		# Read points in track coordinate system
 		self.current_point_cloud = PointCloud()
 		self.current_point_cloud = data
 
 		# transform data to global CS
-		try:
-			self.world_point_cloud = self.listener.transformPointCloud('global',self.current_point_cloud)
-		except:
-			pass
+		self.world_point_cloud = self.listener.transformPointCloud('global',self.current_point_cloud)
 
 		if self.save_poz == False:
 			self.saved_track_pose = self.track_pose
@@ -62,22 +67,46 @@ class get_3D_sensor_img:
 
 		route_x = self.track_pose.x - self.saved_track_pose.x
 		route_y = self.track_pose.y - self.saved_track_pose.y
-		#print(route_x)
 
 		self.new_point_cloud.header.stamp = rospy.Time.now()
 		self.new_point_cloud.header.frame_id = 'global'
 
 		# Save data to array each time track robot move for more than 1 mm
-		if abs(route_x) > 0.001 or abs(route_y) > 0.001:
-			self.scanner_cloud = np.append(self.scanner_cloud, self.world_point_cloud.points)
-			#print(self.scanner_cloud)
-			self.new_point_cloud.points = self.scanner_cloud
+		if abs(route_x) > 0.001: #or abs(route_y) > 0.001:
+			self.num_of_points_arr[self.arr_idx] = len(self.world_point_cloud.points)
+
+			self.arr_idx = self.arr_idx + 1
+
+			# Save points from scanner to array			
+			self.scanner_cloud_points = np.append(self.scanner_cloud_points, self.world_point_cloud.points)			
+
+			if self.arr_idx > self.max_array_len-1:
+				# Delete n points from arrray
+				num_of_points_first_arr = int(self.num_of_points_arr[0])
+				#print("num_of_points_first_arr = ", num_of_points_first_arr)
+				#print(num_of_points_first_arr)
+				self.scanner_cloud_points = self.scanner_cloud_points[num_of_points_first_arr:]
+
+				#print(len(self.scanner_cloud_points))
+
+				self.num_of_points_arr[0] = 0
+				self.num_of_points_arr = np.roll(self.num_of_points_arr, -1)
+
+				self.arr_idx = self.max_array_len - 1
+
+			# Save points in reversed order
+			scanner_cloud_points_reversed = self.scanner_cloud_points[::-1]
+			
+			self.new_point_cloud.points = scanner_cloud_points_reversed
 
 			#print(self.new_point_cloud.points)
 
-			self.pc_pub.publish(self.new_point_cloud)
-
 			self.save_poz = False
+
+		# Publish data constantly
+		self.pc_pub.publish(self.new_point_cloud)
+		
+		#print("Elapsed time = ", time.time() - start_time)
 
 
 if __name__ == "__main__":

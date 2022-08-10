@@ -15,10 +15,9 @@ import rospy
 from sensor_msgs.msg import PointCloud2, LaserScan, PointCloud
 import laser_geometry.laser_geometry as lg
 import math
-import tf2_ros
 import tf
 import numpy as np
-from collections import namedtuple
+import time
 
 rospy.init_node("laserscan_to_pointcloud")
 
@@ -33,6 +32,10 @@ scan = LaserScan()
 
 
 def scan_cb(msg):
+
+    y_limit_min = y_limit[0]
+    y_limit_max = y_limit[1]
+
     scan = msg
 
     #print('A')
@@ -42,7 +45,7 @@ def scan_cb(msg):
     last_angle  = scan.angle_max
     #print(last_angle)
 
-    filter_angle = math.radians(0)
+    filter_angle = math.radians(filter_angle)
     end_angle = start_angle + filter_angle
 
     current_angle = start_angle
@@ -104,11 +107,11 @@ def scan_cb(msg):
     # Delete points where x is larger or smaller than our boundries
     for idx,i in enumerate(transformed_cloud.points):
         
-        if i.y < -0.20: #or i.y > 0.2:
+        if i.y < y_limit_min:
             #print(i.x)
             cleaned_points = np.append(cleaned_points, idx)
         
-        if i.y > 0.20: #or i.y > 0.2:
+        if i.y > y_limit_max:
             #print(i.x)
             cleaned_points = np.append(cleaned_points, idx)
 
@@ -120,7 +123,8 @@ def scan_cb(msg):
 
     pc_pub.publish(transformed_cloud)
 
-def cloud(msg, y_limit):
+def cloud(msg):
+    start_time = time.time()
     
     pc2_msg = msg
 
@@ -131,7 +135,8 @@ def cloud(msg, y_limit):
     point_list = pc2.read_points_list(pc2_msg)
     
     local_points = PointCloud()
-    local_points.header = pc2_msg.header
+    local_points.header.stamp = rospy.Time.now()
+    local_points.header.frame_id = 'laser'
     local_points.points = point_list
 
     transformed_cloud = listener2.transformPointCloud('robot',local_points)
@@ -155,8 +160,21 @@ def cloud(msg, y_limit):
 
     pc_pub.publish(transformed_cloud)
     
+    print("Elapsed time = ", time.time() - start_time)
 
-        
-#rospy.Subscriber("/cloud", PointCloud2, scan_cb, queue_size=1)
-rospy.Subscriber("/scan", LaserScan, scan_cb, queue_size=1)
-rospy.spin()
+    
+if __name__ == "__main__":
+
+    topic = "/cloud"
+    y_limit = [-0.2, 0.2]
+    filter_angle = 5
+
+    
+
+    if topic == "/cloud":
+        rospy.Subscriber("/cloud", PointCloud2, cloud, queue_size=1)
+    else:
+        rospy.Subscriber("/scan", LaserScan, scan_cb, queue_size=1)
+
+    
+    rospy.spin()
