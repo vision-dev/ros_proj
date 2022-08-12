@@ -130,6 +130,8 @@ def cloud(msg):
 
     y_limit_min = y_limit[0]
     y_limit_max = y_limit[1]
+    z_min_limit = 0.02
+    z_max_limit = 0.4
 
     # or a list of the individual points which is less efficient
     point_list = pc2.read_points_list(pc2_msg)
@@ -142,25 +144,30 @@ def cloud(msg):
     transformed_cloud = listener2.transformPointCloud('robot',local_points)
     #pc_pub.publish(transformed_cloud)
     #print(pc22)
+
+
     
 
     cleaned_points = []
     # Delete points where x is larger or smaller than our boundries
     for idx,i in enumerate(transformed_cloud.points):
         
-        if i.y < y_limit_min:
+        if i.y < y_limit_min or i.y > y_limit_max or i.z < z_min_limit or i.z > z_max_limit:
             cleaned_points = np.append(cleaned_points, idx)
         
-        if i.y > y_limit_max:
-            cleaned_points = np.append(cleaned_points, idx)
+        #if i.y > y_limit_max:
+        #    cleaned_points = np.append(cleaned_points, idx)
 
     cleaned_points = cleaned_points.astype(int)
     
     transformed_cloud.points = np.delete(transformed_cloud.points, cleaned_points, axis=0)
 
+    #print(transformed_cloud)
+
     pc_pub.publish(transformed_cloud)
     
-    print("Elapsed time = ", time.time() - start_time)
+    #print(len(transformed_cloud.points))
+    #print("Elapsed time = ", time.time() - start_time)
 
     
 if __name__ == "__main__":

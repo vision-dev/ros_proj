@@ -116,16 +116,16 @@ void callback_delta_to_plc(const beckhoff_msgs::CmdRobot& data){
 
 	//std::cout <<" ADS write " << now_time << '\n';
 	
-	if (counter==1)
-	{
-		end = std::chrono::steady_clock::now();
+	//if (counter==1)
+	//{
+	//	end = std::chrono::steady_clock::now();
 
-		std::cout << "Elapsed time in microseconds: "
-		<< std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
-		<< " ms" << std::endl;
+	//	std::cout << "Elapsed time in microseconds: "
+	//	<< std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+	//	<< " ms" << std::endl;
 
-		counter = 0;
-	}
+	//	counter = 0;
+	//}
 }
 
 // Notification callback function - read odometry data
@@ -161,9 +161,9 @@ void callback_cat_from_plc(const AmsAddr* pAddr, const AdsNotificationHeader* pN
 
 	tracks_pose_pub.publish(Cat_pose2D);
 
-	std::cout <<" ADS read X " << Cat_pose2D.x << '\n';
-	std::cout <<" ADS read Y " << Cat_pose2D.y << '\n';
-	std::cout <<" ADS read Theta " << Cat_pose2D.theta << '\n';
+	//std::cout <<" ADS read X " << Cat_pose2D.x << '\n';
+	//std::cout <<" ADS read Y " << Cat_pose2D.y << '\n';
+	//std::cout <<" ADS read Theta " << Cat_pose2D.theta << '\n';
 }
 
 // Send data to caterpillars

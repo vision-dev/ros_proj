@@ -51,7 +51,7 @@ class detect_asparagus:
 		# Get current pose of the track robot (calculation is not real time so we need location of the platform when data was acquired)
 		rospy.Subscriber("/tracks/pose", Pose2D, self.callback_track_pose)
 		self.pub = rospy.Publisher("/aspragus_cloud", PointCloud, queue_size=1)
-		self.asparagus_location_pub = rospy.Publisher("/aspragus_locations", numpy_msg(Floats), queue_size=10)
+		self.asparagus_location_pub = rospy.Publisher("/aspragus_locations", numpy_msg(Floats), queue_size=1)
 
 		self.listener = tf.TransformListener()
 
@@ -64,26 +64,32 @@ class detect_asparagus:
 
 		self.first_pick_point = True
 
+
 	def callback_track_pose(self, data):
 		self.track_pose = data
 
 	def callback_pointcloud(self, data):
+		
+		self.start_time = time.time()
+
 		self.pointcloud = data.points
 
 		# Cut points in y and z direction (clean ground points and robot frame)
 		cut_z_height = 0.1 # in meters
 		self.asparagus_points = self.find_z_points(cut_z_height)
 
+		
+
 		# Check if there are any points above ground
 		if len(self.asparagus_points) > 0:
 			# Size of square for decimation
-			dx = dy = 0.02
+			dx = dy = 0.03
 			# Minimal number of points in square
-			min_points = 20
+			min_points = 40
 			# Plot 2D histogram
 			plot_results = False
 			# Return sqares in which there are more than min_points
-			limit_array, points_valid = self.point_histogram(self.asparagus_points, 0.02, 0.02, min_points, plot_results)
+			limit_array, points_valid = self.point_histogram(self.asparagus_points, dx, dy, min_points, plot_results)
 
 			# Check if any sqares are valid
 			if points_valid:
@@ -93,6 +99,8 @@ class detect_asparagus:
 
 				# Calculate mean value for each asparagus
 				x_median, y_median = self.median_asparagus_points(self.asparagus_points, limit_array, z_pick_height, min_z_points)
+
+				#print("Find x,y time = ", time.time() - self.start_time)
 
 		# Check if median median for predicted aspragus is calculated
 		if self.median_available:
@@ -376,10 +384,10 @@ class detect_asparagus:
 			flatten_aspargus = np.asarray(self.aspargus, dtype=np.float32)
 			flatten_aspargus = flatten_aspargus.flatten()
 
-			#print(flatten_aspargus)
-
+			print(self.aspargus)
 
 			self.asparagus_location_pub.publish(flatten_aspargus)
+			print("Elapsed time = ", time.time() - self.start_time)
 
 
 

@@ -43,7 +43,7 @@ class get_3D_sensor_img:
 		self.br = tf.TransformBroadcaster()
 
 		# Define max array length
-		self.max_array_len = 80
+		self.max_array_len = 60
 		self.num_of_points_arr = np.zeros(self.max_array_len)
 		self.arr_idx = 0
 

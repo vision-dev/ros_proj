@@ -12,9 +12,10 @@ import math
 import time
 
 from supportingFunctions.inverseKinematics_Phi import deltaInverseKin
+from supportingFunctions.minJerkInterpolator import minJerkInterpolator
 
 class motion_planning:
-	def __init__(self, xy_limits, z_start=0.32):
+	def __init__(self, xy_limits, z_start=0.15):
 		# Read parameters
 		self.x_min_limit = xy_limits[0]
 		self.x_max_limit = xy_limits[1]
@@ -29,7 +30,7 @@ class motion_planning:
 		# Subcribe to track robot pose
 		rospy.Subscriber("/tracks/pose", Pose2D, self.callback_track_pose)
 		# Read angles of delta robot motors
-		#rospy.Subscriber(self.topicName_delta_from_plc, JointStateRobot, self.callback_robot_angles)
+		rospy.Subscriber('/robot/joint_state', JointStateRobot, self.callback_robot_angles)
 
 		self.track_pose = Pose2D()
 
@@ -41,18 +42,46 @@ class motion_planning:
 		self.step_path = 0
 		self.path_calculated = False
 		# State machine for motion control
-		self.home_poz = [-200, 0, self.z_start, 0]
+		self.gripper_open_poz  = -120
+		self.gripper_close_poz = 0
+		self.home_poz = [-0.2, 0, self.z_start, 0, self.gripper_open_poz]
 		self.set_poz = np.copy(self.home_poz)
 		self.step_motion = 0
 		# Time gripper needs to close
 		self.gripper_time = 1
 		# Set place position for asparagus
-		self.place_poz = [[0, 0.2, 0.1, 0], [0, -0.2, 0.1, 0]]
+		self.place_poz = [[0, 0.2, 0.1, 0, self.gripper_close_poz], [0, -0.2, 0.1, 0, self.gripper_close_poz]]
 		self.new_path_request = True
+		self.z_offset = -900
+
+		# Interpolation
+		dT_ms = int(1000/1000)
+
+		# initialize Interpolator:
+		self.maxVel = 300
+		self.rotVel = 50
+		self.maxSpeed = np.array([self.maxVel*10, self.maxVel*10, self.maxVel*10, self.rotVel*5, self.rotVel*5])
+		self.interpolator = minJerkInterpolator(maxSpeed=self.maxSpeed, dT=dT_ms*0.001, printAll=False)
+		self.pub = rospy.Publisher('/r_control', numpy_msg(Floats),queue_size=1)
 
 	
 	def callback_track_pose(self, data):
 		self.track_pose = data
+
+		# Start robot motion
+		self.robot_motion()
+
+		self.next_point = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
+
+		self.interpolator.addPoint(self.next_point)     
+
+		status, r_control = self.interpolator.run()
+		#status = 0
+		if status > 0:
+
+			r_control = r_control.astype(dtype=np.float32)
+			
+			self.pub.publish(r_control)
 
 	def callback_robot_angles(self, data):
 		self.qq = [data.qq.j0, data.qq.j1, data.qq.j2, data.qq.j3, data.qq.j4]
@@ -67,13 +96,11 @@ class motion_planning:
 		self.asparagus_locations = np.reshape(self.asparagus_locations, (-1,4))
 		#print(self.asparagus_locations)
 		# Filter points that are inside work space of a delta robot
-		self.locations_out_of_range(self.asparagus_locations)
+		if len(self.asparagus_locations) > 0:
+			self.locations_out_of_range(self.asparagus_locations)
 		# Plan path for robot
 		if self.new_path_request:
 			self.path_planning(min_dist=0.05, pretarget_dist=0.15, calculation_step=0.01)
-
-		# Start robot motion
-		self.robot_motion()
 
 	def locations_out_of_range(self, asparagus_locations):
 		# Transform locations from global cs to robot cs and delete points that robot can't reach (out of range)
@@ -129,9 +156,13 @@ class motion_planning:
 	def robot_in_position(self, desired_angle, actual_angle, angle_error):
 		# Check if delta robot reached desired position
 		# Transform desired angle to deegres
-		desired_angle_deg = math.degrees(desired_angle)
+		desired_angle_deg = 180 / np.pi *(desired_angle)
 		# Calculate error
-		e = desired_angle_deg - actual_angle
+		e = desired_angle_deg[:3] - actual_angle[:3]
+
+		print('Desired poz', desired_angle_deg)
+		print('Actual poz', actual_angle)
+		print(e)
 		
 		# Check if each joint reached desired angle
 		poz_reached = np.full((len(e)), False)
@@ -142,7 +173,20 @@ class motion_planning:
 				poz_reached[idx] = False
 
 		# Check if all joints reached desired position
+		#robot_in_poz = np.all(poz_reached == True)
+		#print(robot_in_poz)
+
 		return np.all(poz_reached == True)
+
+	def convert_point_to_robot_cs(self, point, z_offset):
+		point_robot = np.zeros(len(point))
+		
+		temp= np.multiply(point[:3],1000)
+		point_robot[:3] = temp #point[:3] * 1000
+		point_robot[2] = point[2]*1000 + z_offset
+		point_robot[3:] = point[3:]
+
+		return point_robot
 
 	def path_planning(self, min_dist, pretarget_dist, calculation_step):
 		'''
@@ -153,6 +197,16 @@ class motion_planning:
 		
 		# Check how many asparagus are detected
 		self.num_of_asparagus = len(self.cleaned_locations)
+		#print('Len picked = ', len(self.picked_asparagus))
+		#print('Len close = ', len(self.asparagus_too_close))
+		#print('Len cleaned_locations = ', self.num_of_asparagus)
+		#print('step = ', self.step_path)
+
+		
+
+		if self.num_of_asparagus < 1:
+			self.step_path = 0
+			#return
 
 		if self.step_path == 0:
 			# init parameters
@@ -163,12 +217,13 @@ class motion_planning:
 			# Angle a which we are trying to generate picking trajectory
 			self.try_angle = 0
 			self.gripper_poz = np.zeros(4)
+			self.picked_asparagus_flag_arr = np.full(self.num_of_asparagus, False)
 
-			self.step_path = 0.5
+			if self.num_of_asparagus > 0:
+				self.step_path = 0.5
 
 		elif self.step_path == 0.5:
 			# Check which asparagus were already harvested
-			self.picked_asparagus_flag_arr = np.full(self.num_of_asparagus, False)
 			if len(self.picked_asparagus) > 0:
 				self.pick_dist_array = np.zeros((len(self.picked_asparagus), self.num_of_asparagus))
 				for idx, i in enumerate(self.picked_asparagus):
@@ -186,6 +241,18 @@ class motion_planning:
 			self.step_path = 1
 
 		elif self.step_path == 1:
+			if len(self.cleaned_locations) != len(self.asparagus_too_close):
+				temp = np.full(self.num_of_asparagus, False)
+				size_of_old = len(self.asparagus_too_close)
+				temp[:size_of_old] = self.asparagus_too_close
+				self.asparagus_too_close = temp
+
+			if len(self.cleaned_locations) != len(self.picked_asparagus_flag_arr):
+				temp = np.full(self.num_of_asparagus, False)
+				size_of_old = len(self.picked_asparagus_flag_arr)
+				temp[:size_of_old] = self.picked_asparagus_flag_arr
+				self.picked_asparagus_flag_arr = temp
+
 			# Check asparagus height
 			for idx, i in enumerate(self.cleaned_locations):
 				# 4th element in array represents if asparagus is ready for harvesting (is high enough)
@@ -333,23 +400,29 @@ class motion_planning:
 			self.path_calculated = True
 	
 	def robot_motion(self):
+
+		#print('step_motion = ',self.step_motion)
+		#print('Path calculated = ', self.path_calculated)
 		
 		# Calculate desired angles in robot axis
-		angle_error = [0.5, 0.5, 0.5, 1]
+		angle_error = [1, 1, 1, 1, 1]
 
 		if self.step_motion == 0:
 			self.robot_in_poz = False
 			self.path_idx = 0
 			# Check if path was already calculated, else go to home position
 			if self.path_calculated:
-				self.step_path = 2
+				self.step_motion = 2
 			else:
 				self.set_poz = self.home_poz
-				self.step_path = 1
+				self.step_motion = 1
 
 		elif self.step_motion == 1:
 			# Check if we reached home position
-			qd_radians, _ = deltaInverseKin(self.set_poz[0], self.set_poz[1], self.set_poz[2], self.set_poz[3])
+			qd_radians = np.zeros(5)
+			temp = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
+			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
+			angle_error = [0.5, 0.5, 0.5, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 			if self.robot_in_poz:
 				self.robot_in_poz = False
@@ -370,9 +443,12 @@ class motion_planning:
 			y_robot_cs = self.path_global_cs[self.path_idx][1] - y_trans
 			
 			# Send robot to path point
-			self.set_poz = [x_robot_cs, y_robot_cs, self.path_global_cs[self.path_idx][2], self.path_global_cs[self.path_idx][3]]
+			self.set_poz = [x_robot_cs, y_robot_cs, self.path_global_cs[self.path_idx][2], self.path_global_cs[self.path_idx][3], self.gripper_open_poz]
 
-			qd_radians, _ = deltaInverseKin(self.set_poz[0], self.set_poz[1], self.set_poz[2], self.set_poz[3])
+			qd_radians = np.zeros(5)
+			temp = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
+			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
+			angle_error = [3, 3, 3, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:
@@ -402,18 +478,15 @@ class motion_planning:
 			y_robot_cs = self.path_global_cs[-1][1] - y_trans
 			
 			# Send robot to path point
-			self.set_poz = [x_robot_cs, y_robot_cs, self.path_global_cs[-1][2], self.path_global_cs[-1][3]]
+			self.set_poz = [x_robot_cs, y_robot_cs, self.path_global_cs[-1][2], self.path_global_cs[-1][3], self.gripper_close_poz]
 
-			qd_radians, _ = deltaInverseKin(self.set_poz[0], self.set_poz[1], self.set_poz[2], self.set_poz[3])
+			qd_radians = np.zeros(5)
+			temp = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
+			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
 			
 			elapsed_time = time.time() - self.start_gripper_closing
 
 			if elapsed_time > self.gripper_time:
-				# Save position of picked asparagus
-				self.picked_asparagus = np.append(self.picked_asparagus, self.path_global_cs[-1])
-				self.path_calculated = False
-				self.new_path_request = True
-
 				self.step_motion = 6
 		
 		elif self.step_motion == 6:
@@ -427,14 +500,22 @@ class motion_planning:
 			y_robot_cs = self.path_global_cs[-1][1] - y_trans
 			
 			# Send robot to path point
-			self.set_poz = [x_robot_cs, y_robot_cs, self.z_start, self.path_global_cs[-1][3]]
+			self.set_poz = [x_robot_cs, y_robot_cs, self.z_start/2, self.path_global_cs[-1][3], self.gripper_close_poz]
 
-			qd_radians, _ = deltaInverseKin(self.set_poz[0], self.set_poz[1], self.set_poz[2], self.set_poz[3])
-
+			qd_radians = np.zeros(5)
+			temp = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
+			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
+			angle_error = [6, 6, 6, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:
 				self.robot_in_poz = False
+
+				# Save position of picked asparagus
+				self.picked_asparagus = np.append(self.picked_asparagus, self.path_global_cs[-1])
+
+				self.path_calculated = False
+				self.new_path_request = True
 
 				self.step_motion = 7
 
@@ -449,9 +530,11 @@ class motion_planning:
 				self.storage_idx = 1
 
 			self.set_poz = self.place_poz[self.storage_idx]
-				
-			qd_radians, _ = deltaInverseKin(self.set_poz[0], self.set_poz[1], self.set_poz[2], self.set_poz[3])
-
+			
+			qd_radians = np.zeros(5)
+			temp = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
+			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
+			angle_error = [0.5, 0.5, 0.5, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:

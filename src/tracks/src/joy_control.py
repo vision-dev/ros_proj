@@ -93,6 +93,7 @@ class joystick_control:
 		if deadman_switch:
 			# Linear velocity
 			linear_velocity = self.joy.axes[4] * self.setVel
+			#print(linear_velocity)
 			# Angular velocity
 			angular_velocity = self.joy.axes[3] * self.rotVel
 			# Move track with constant linear velocity

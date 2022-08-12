@@ -198,7 +198,7 @@ class joystick_control:
 
 		# Generate next point in trajectory
 		next_point = np.array([self.points_X, self.points_Y, self.points_Z, self.point_rot_z, gripper_poz])
-		#print(self.points_X)
+		print(self.points_Z)
 		#print(self.points_Y)
 
 		self.interpolator.addPoint(next_point)     

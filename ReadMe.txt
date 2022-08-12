@@ -19,7 +19,6 @@ Zagon programa za pemikanje robota z joystickom
 3) Zaženemo "rosrun joy joy_node" s tem se vzpostavi povezava z joystickom
 4) Zaženemo "rosrun delta_robot joy_control.py" s tem beremo ukaz iz joysticka
 5) Zaženemo "rosrun delta_robot control_r2omegas.py". V tej kodi teče PD regulator za robota.
-6) Zaženemo "rosrun delta_robot control_r2omegas.py". V tej kodi teče PD regulator za robota.
 
 
 **** 1.07.22 *****
@@ -78,6 +77,21 @@ Kaj je potrebno upoštevati pri planiranju poti robota:
 
 Postopek pobiranja:
 
+**** 12.08.22 ****
+
+Zagon programov za pobriranje špargljev:
+
+1) roslaunch sick_scan sick_lms_1xx.launch hostname:=192.168.1.100
+2) rosrun transformations sensor_to_robot.py laser 0.55 0.05 0.5 0 2.36 0
+3) rosrun transformations robot_to_global.py
+4) rosrun beckhoff_comm plc_pc_comm
+5) rosrun joy joy_node
+6) rosrun tracks joy_control.py
+7) rosrun delta_robot control_r2omegas.py
+8) rosrun acquire_asparagus sick_scanner.py
+9) rosrun acquire_asparagus sick_get_global_cloud.py
+10) rosrun acquire_asparagus detect_asparagus.py
+11) rosrun delta_robot motion_planning.py
 
 
 

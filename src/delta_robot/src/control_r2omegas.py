@@ -56,6 +56,8 @@ class velocity_control:
 	def callback_readReference(self, data):
 		self.r_control = data.data
 
+		#print(self.r_control)
+
 		self.start_time = time.time()
 		#print(self.r_control)
 
@@ -93,6 +95,7 @@ class velocity_control:
 			#print(x_sin_test)
 
 			qd_radians, _ = deltaInverseKin(self.r_control[0], self.r_control[1], self.r_control[2], self.r_control[3])
+			#print('qd_radians = ', qd_radians)
 			#qd_radians, _ = deltaInverseKin(x_sin_test, 0, -750, self.r_control[3])
 			# Transform to degrees
 			qd[:3] = 180/np.pi*qd_radians
@@ -149,7 +152,7 @@ class velocity_control:
 			# Desired velocity
 			self.dqd = dq
 
-			print(dq)
+			#print(dq)
 
 			# Write data to array
 			RobotCmd.Timestamp = rospy.get_rostime()
@@ -195,7 +198,7 @@ if __name__ == "__main__":
 	Kd_delta = 0.05
 	Kd = [Kd_delta, Kd_delta, Kd_delta,0.4,0.4]
 	#rospy.set_param('/robot_Kd', [0.005,0.005,0.005,0.4,0.4])
-	maxOmega = [300,300,300,10,10]
+	maxOmega = [100,100,100,10,10]
 	displayResults = False
 
 	control = velocity_control(Kp, Kd, maxOmega, displayResults)

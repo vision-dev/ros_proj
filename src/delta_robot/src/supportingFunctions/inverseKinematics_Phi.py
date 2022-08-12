@@ -80,7 +80,7 @@ def deltaInverseKin(Px, Py, Pz, phi=0):
 
 	# -- angles:	(angles of the motors - 3 motors in 2pi)
 	# Rotate robot coordinate system by desired angle in °
-	CSRotAngle = 29
+	CSRotAngle = 29 - 90
 	CSRotAngleRad = math.radians(CSRotAngle)
 
 	armAngles = [0 + CSRotAngleRad, 2*np.pi/3 + CSRotAngleRad, 2*np.pi*2/3 + CSRotAngleRad]
