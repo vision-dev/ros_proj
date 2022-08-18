@@ -10,6 +10,7 @@
 
 '''
 
+from pickle import TRUE
 import rospy
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Pose2D
@@ -85,11 +86,11 @@ class detect_asparagus:
 			# Size of square for decimation
 			dx = dy = 0.03
 			# Minimal number of points in square
-			min_points = 40
+			min_points = 27
 			# Plot 2D histogram
 			plot_results = False
 			# Return sqares in which there are more than min_points
-			limit_array, points_valid = self.point_histogram(self.asparagus_points, dx, dy, min_points, plot_results)
+			limit_array, points_valid = self.point_histogram(self.asparagus_points, 0.02, 0.02, min_points, plot_results)
 
 			# Check if any sqares are valid
 			if points_valid:
@@ -329,8 +330,41 @@ class detect_asparagus:
 		
 		
 		#self.aspargus = []
-		
+		new_point = False
+		if self.first_pick_point:
+			# This is the first pick point
+			self.aspargus = np.array([[x_median[0], y_median[0], z_pick_height, harvest_point_valid[0]]])
+			self.first_pick_point = False
+		else:
+			for idx in range(num_of_pick_asparagus):
+				new_point = False
+				# Calculate all distances to valid points
+				dist_array = np.zeros(len(self.aspargus))
+				new_point_arr = np.full((len(self.aspargus)), False)
+				for idx2, i in enumerate(self.aspargus):
+					point1 = np.array([x_median[idx], y_median[idx], 0])
+					point2 = np.array([i[0], i[1], 0])
+					dist = np.linalg.norm(point1 - point2)
 
+					if dist > 0.03:
+						# new point potencial
+						new_point_arr[idx2] = True
+					else: 
+						# fix point location
+						self.aspargus[idx2] = np.array([[x_median[idx], y_median[idx], z_pick_height, harvest_point_valid[idx]]])
+						new_point_arr[idx2] = False
+
+					dist_array[idx2] = dist
+
+				print('new_point_arr = ', new_point_arr)
+				new_point = np.all(new_point_arr == True)
+				print('new_point = ', new_point)
+				print('dist array = ', dist_array)
+
+				if new_point:
+					self.aspargus = np.append(self.aspargus,[[x_median[idx], y_median[idx], z_pick_height, harvest_point_valid[idx]]], axis = 0)
+		print('self.aspargus = ',self.aspargus)
+		'''
 		for idx in range(num_of_pick_asparagus):
 			# Check if point was already saved
 			new_point = False
@@ -338,8 +372,16 @@ class detect_asparagus:
 
 				new_point_arr = np.full((len(self.aspargus)), False)
 				for idx2,i in enumerate(self.aspargus):
-					#print(i)
-					#print(i[0])
+					point1 = [x_median[idx], y_median[idx], 0]
+					point2 = [i[0], i[1], 0]
+					dist = np.linalg.norm(point1 - point2)
+
+					if dist > self.search_radius:
+						new_point = True
+					else:
+						new_point = False
+						break
+
 					if (x_median[idx] - i[0])**2 + (y_median[idx] - i[1])**2 > self.search_radius**2:
 						new_point_arr[idx2] = True
 					else:
@@ -355,7 +397,7 @@ class detect_asparagus:
 				
 			if new_point:
 				self.aspargus = np.append(self.aspargus,[[x_median[idx], y_median[idx], z_pick_height, harvest_point_valid[idx]]], axis = 0)
-
+		'''
 		
 		# Save points in PointCloud format so that we can visualize them in rviz
 		num_of_pick_asparagus = len(self.aspargus)
@@ -381,13 +423,54 @@ class detect_asparagus:
 
 			#print(transformed_cloud.points)
 
-			flatten_aspargus = np.asarray(self.aspargus, dtype=np.float32)
+			# Filter duplicated points 
+			filtered_points = self.filter_pick_points(0.03)
+
+			flatten_aspargus = np.asarray(filtered_points, dtype=np.float32)
 			flatten_aspargus = flatten_aspargus.flatten()
 
 			print(self.aspargus)
+			print('Filtered points = ', filtered_points)
 
 			self.asparagus_location_pub.publish(flatten_aspargus)
 			print("Elapsed time = ", time.time() - self.start_time)
+
+	def filter_pick_points(self, min_dist):
+		pick_points_0 = np.copy(self.aspargus)
+		#print('test = ', self.aspargus)
+
+		numOfAsparagus = len(pick_points_0)
+		#print('Pick_points = ',pick_points_0)
+		#print('Num of as = ',numOfAsparagus)
+
+		if numOfAsparagus > 1:
+			dist_matrix = np.zeros(())
+
+			#idx = 0
+			for idx, i in enumerate(pick_points_0):
+				dist_array = np.zeros(len(pick_points_0))
+				for idx2, j in enumerate(pick_points_0):
+					if idx == idx2:
+						dist_array[idx] = 0
+					else:
+						dist = np.linalg.norm(i[:3] - j[:3])
+						dist_array[idx2] = dist
+				
+				#print('Dist = ', dist_array)
+
+				delete_arr = []
+				for idx3, k in enumerate(dist_array):
+					if k < min_dist and idx3 != idx:
+						delete_arr.append(idx3)
+				pick_points_0 = np.delete(pick_points_0, delete_arr, axis=0)
+
+				#print('Dist2 = ', pick_points_0)
+
+
+				
+
+		return pick_points_0
+
 
 
 

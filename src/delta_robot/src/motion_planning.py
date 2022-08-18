@@ -36,7 +36,8 @@ class motion_planning:
 
 		self.cold_start = True
 
-		self.picked_asparagus = []
+		self.picked_asparagus = np.array([[0, 0, 0 ,0]])
+		self.first_asparagus_picked = False
 		
 		# State machine for path planning
 		self.step_path = 0
@@ -100,7 +101,7 @@ class motion_planning:
 			self.locations_out_of_range(self.asparagus_locations)
 		# Plan path for robot
 		if self.new_path_request:
-			self.path_planning(min_dist=0.05, pretarget_dist=0.15, calculation_step=0.01)
+			self.path_planning(min_dist=0.03, pretarget_dist=0.15, calculation_step=0.01)
 
 	def locations_out_of_range(self, asparagus_locations):
 		# Transform locations from global cs to robot cs and delete points that robot can't reach (out of range)
@@ -132,25 +133,36 @@ class motion_planning:
 			self.cleaned_locations_robot_cs = self.asparagus_locations_robot_cs
 
 		# Check if picked asparagus are out of range
-		delete_idx = []
-		if len(self.picked_asparagus) > 0:
-			for idx, i in enumerate(self.picked_asparagus):
-				x_trans = self.track_pose.x * math.cos(self.track_pose.theta)
-				y_trans = self.track_pose.y * math.sin(self.track_pose.theta)
+		if self.first_asparagus_picked:
+			#self.picked_asparagus = np.reshape(self.picked_asparagus, (-1,4))
+			delete_idx = []
+			if len(self.picked_asparagus) > 0:
+				#print(len(self.picked_asparagus))
+				#print('test = ', self.picked_asparagus)
+				for idx, i in enumerate(self.picked_asparagus):
+					x_trans = self.track_pose.x * math.cos(self.track_pose.theta)
+					y_trans = self.track_pose.y * math.sin(self.track_pose.theta)
 
-				# Transform points from global cs to robot cs
-				x_robot_cs = i[0] - x_trans
-				y_robot_cs = i[1] - y_trans
+					# Transform points from global cs to robot cs
+					x_robot_cs = i[0] - x_trans
+					y_robot_cs = i[1] - y_trans
 
-				# Check for limits in x direction
-				if x_robot_cs < self.x_min_limit or x_robot_cs > self.x_max_limit:
-					# Check for limits in y direction
-					if y_robot_cs < self.y_min_limit or y_robot_cs > self.y_max_limit:
-						delete_idx = np.append(delete_idx, idx)
+					# Check for limits in x direction
+					if x_robot_cs < self.x_min_limit or x_robot_cs > self.x_max_limit:
+						# Check for limits in y direction
+						if y_robot_cs < self.y_min_limit or y_robot_cs > self.y_max_limit:
+							delete_idx = np.append(delete_idx, idx)
 
-		# Delete points that are out of range
-		if len(delete_idx) > 0:
-			self.picked_asparagus = np.delete(self.picked_asparagus, delete_idx)
+			# Delete points that are out of range
+			#print(delete_idx)
+			if len(delete_idx) > 0:
+				if len(delete_idx)==1:
+					delete_idx = int(delete_idx)
+
+				if len(self.picked_asparagus) > 1:
+					self.picked_asparagus = np.delete(self.picked_asparagus, delete_idx)
+				else:
+					self.picked_asparagus = np.array([[1000, 1000, 1000 ,0]])
 
 
 	def robot_in_position(self, desired_angle, actual_angle, angle_error):
@@ -160,9 +172,9 @@ class motion_planning:
 		# Calculate error
 		e = desired_angle_deg[:3] - actual_angle[:3]
 
-		print('Desired poz', desired_angle_deg)
-		print('Actual poz', actual_angle)
-		print(e)
+		#print('Desired poz', desired_angle_deg)
+		#print('Actual poz', actual_angle)
+		#print(e)
 		
 		# Check if each joint reached desired angle
 		poz_reached = np.full((len(e)), False)
@@ -200,7 +212,7 @@ class motion_planning:
 		#print('Len picked = ', len(self.picked_asparagus))
 		#print('Len close = ', len(self.asparagus_too_close))
 		#print('Len cleaned_locations = ', self.num_of_asparagus)
-		#print('step = ', self.step_path)
+		print('step path = ', self.step_path)
 
 		
 
@@ -238,6 +250,8 @@ class motion_planning:
 						min_idx =np.argmin(i)
 						self.picked_asparagus_flag_arr[min_idx] = True
 
+			print(self.picked_asparagus_flag_arr)
+
 			self.step_path = 1
 
 		elif self.step_path == 1:
@@ -254,11 +268,13 @@ class motion_planning:
 				self.picked_asparagus_flag_arr = temp
 
 			# Check asparagus height
+			print('Cleaned_location = ', self.cleaned_locations)
 			for idx, i in enumerate(self.cleaned_locations):
 				# 4th element in array represents if asparagus is ready for harvesting (is high enough)
 				# Check if asparagus are too close and if asparagus was already picked
 				if i[3] and self.asparagus_too_close[idx] == False and self.picked_asparagus_flag_arr[idx] == False:
 					self.pick_idx = idx
+					print('Pick_idx = ', self.pick_idx)
 					self.ready_for_pick = True
 					self.grow_poz = i[:3]
 
@@ -280,6 +296,7 @@ class motion_planning:
 					self.dist_array[idx] = dist
 				else:
 					self.dist_array[idx] = 0
+			print
 
 			self.step_path = 3
 
@@ -352,6 +369,10 @@ class motion_planning:
 					self.dist_x_ok = False
 
 				# Check if all conditions are true
+				print('self.dist_to_asparagus_ok = ', self.dist_to_asparagus_ok)
+				print('self.dist_tracks_ok = ', self.dist_tracks_ok)
+				print('self.dist_x_ok = ', self.dist_x_ok)
+				#self.dist_to_asparagus_ok = True
 				if self.dist_to_asparagus_ok and self.dist_tracks_ok and self.dist_x_ok:
 					# go to next point
 					self.gripper_poz[0] = self.gripper_poz[0] - calculation_step * math.cos(math.radians(self.try_angle))
@@ -398,11 +419,15 @@ class motion_planning:
 		elif self.step_path == 6:
 			self.new_path_request = False
 			self.path_calculated = True
+
+			self.step_path = 0.5
 	
 	def robot_motion(self):
 
 		#print('step_motion = ',self.step_motion)
 		#print('Path calculated = ', self.path_calculated)
+		#print('New path request = ', self.new_path_request)
+
 		
 		# Calculate desired angles in robot axis
 		angle_error = [1, 1, 1, 1, 1]
@@ -512,7 +537,13 @@ class motion_planning:
 				self.robot_in_poz = False
 
 				# Save position of picked asparagus
-				self.picked_asparagus = np.append(self.picked_asparagus, self.path_global_cs[-1])
+				
+				if self.first_asparagus_picked==False:
+					self.picked_asparagus = np.array([[self.path_global_cs[-1][0], self.path_global_cs[-1][1], self.path_global_cs[-1][2], self.path_global_cs[-1][3]]])
+				else:
+					self.picked_asparagus = np.append(self.picked_asparagus, [[self.path_global_cs[-1][0], self.path_global_cs[-1][1], self.path_global_cs[-1][2], self.path_global_cs[-1][3]]], axis=0)
+
+				self.first_asparagus_picked = True
 
 				self.path_calculated = False
 				self.new_path_request = True
