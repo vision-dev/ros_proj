@@ -56,7 +56,7 @@ class velocity_control:
 	def callback_readReference(self, data):
 		self.r_control = data.data
 
-		#print(self.r_control)
+		#print('r_control = ', self.r_control)
 
 		self.start_time = time.time()
 		#print(self.r_control)
@@ -119,6 +119,7 @@ class velocity_control:
 			self.testpub.publish(qd[0])
 
 			qd[3:] = self.r_control[3:]
+			#print('qd = ', qd)
 
 			# angular error - joint coordinates
 			e = qd - self.qq
@@ -135,6 +136,10 @@ class velocity_control:
 			
 			dq = np.zeros((5), dtype=np.float32)
 			dq = self.Kp*e + self.Kd * de
+			
+			# limit error for gripper
+			#if e[4] < 1:
+			#	dq[4] = 0
 
 			dq = np.clip(dq, -self.maxOmegas, self.maxOmegas)
 			dq = dq.astype(np.float32)
@@ -160,8 +165,24 @@ class velocity_control:
 			RobotCmd.dq.j1 = dq[1]
 			RobotCmd.dq.j2 = dq[2]
 			RobotCmd.dq.j3 = dq[3]
-			RobotCmd.dq.j4 = dq[4]
-			
+			print(self.r_control[4])
+			if self.r_control[4] == 0.0:
+				RobotCmd.dq.j4 = 0
+				# Open gripper
+				RobotCmd.open_gripper  = 0
+				RobotCmd.close_gripper = 1
+			elif self.r_control[4] == -120.0:
+				RobotCmd.dq.j4 = 0
+				# Open gripper
+				RobotCmd.open_gripper  = 1
+				RobotCmd.close_gripper = 0
+			else:
+				RobotCmd.dq.j4 = dq[4]
+				RobotCmd.open_gripper  = 0
+				RobotCmd.close_gripper = 0
+
+			print('Open gripper = ', RobotCmd.open_gripper)
+			print('Close gripper = ', RobotCmd.close_gripper)
 
 			#print('--------------------------')
 			#print(data_to_send)
@@ -193,12 +214,13 @@ if __name__ == "__main__":
 	
 	
 	Kp_delta = 5
-	Kp = [Kp_delta,Kp_delta,Kp_delta,2,3]
+	Kp = [Kp_delta,Kp_delta,Kp_delta, 5, 1]
 	#rospy.set_param('/robot_Kp', [5,5,5,2,3])
 	Kd_delta = 0.05
-	Kd = [Kd_delta, Kd_delta, Kd_delta,0.4,0.4]
+	Kd_DC = 0.05
+	Kd = [Kd_delta, Kd_delta, Kd_delta, Kd_DC, Kd_DC]
 	#rospy.set_param('/robot_Kd', [0.005,0.005,0.005,0.4,0.4])
-	maxOmega = [100,100,100,10,10]
+	maxOmega = [100,100,100,50,500]
 	displayResults = False
 
 	control = velocity_control(Kp, Kd, maxOmega, displayResults)

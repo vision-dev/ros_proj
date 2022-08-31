@@ -19,6 +19,7 @@ from sensor_msgs.msg import Joy
 from geometry_msgs.msg import TwistStamped
 from geometry_msgs.msg import Pose2D
 import time
+from std_msgs.msg import Bool
 
 import numpy as np
 import matplotlib.pyplot as plt 
@@ -49,6 +50,7 @@ class joystick_control:
 		self.points_Y = 0
 		self.points_Z = -700
 		self.point_rot_z = 0
+		self.gripper_poz = 0
 		self.total_time = 0
 
 		self.joy = Joy()
@@ -62,6 +64,8 @@ class joystick_control:
 		self.tracks_pose = Pose2D()
 		self.save_pose_flag = False
 
+		self.move_gripper = False
+
 		# User settings:
 		nodeName = 'delta_joy_control'
 		self.topicName = '/r_control'
@@ -72,7 +76,7 @@ class joystick_control:
 		#rate = rospy.Rate(5)
 
 		# initialize Interpolator:
-		self.maxSpeed = np.array([self.maxVel*10, self.maxVel*10, self.maxVel*10, self.rotVel*5, self.rotVel*5])
+		self.maxSpeed = np.array([self.maxVel*10, self.maxVel*10, self.maxVel*10, self.rotVel*10, 10000])
 		self.interpolator = minJerkInterpolator(maxSpeed=self.maxSpeed, dT=dT_ms*0.001, printAll=False)
 
 		rospy.Subscriber("joy", Joy, self.callback_joy)
@@ -82,7 +86,11 @@ class joystick_control:
 		# Get pose 2D of the tracks
 		rospy.Subscriber("/tracks/pose", Pose2D, self.callback_tracks_pose)
 
-		self.pub = rospy.Publisher(self.topicName, numpy_msg(Floats),queue_size=1)
+		self.pub          = rospy.Publisher(self.topicName, numpy_msg(Floats),queue_size=1)
+		self.pub_zero     = rospy.Publisher("/robot/zero", Bool,queue_size=1)
+		
+		
+		self.home_gripper = False
 
 	def callback_joy(self, data):
 		self.joy = data
@@ -115,18 +123,33 @@ class joystick_control:
 		#print(deadman_switch)
 		if deadman_switch:
 			# X axis 
-			vel_X = self.joy.axes[0] * -self.setVel
+			vel_X = self.joy.axes[1] * self.setVel
 			#print(self.joy.axes[0])
 			# Y axis
-			vel_Y = self.joy.axes[1] * self.setVel
+			vel_Y = self.joy.axes[0] * self.setVel
 			# Z axis
 			vel_Z = self.joy.axes[7] * self.setVel
 			# Rotation around Z axis
 			rot_Z = self.joy.axes[6] * self.rotVel
+			# Opening gripper
+			rot_gripper = 0
+			if self.joy.axes[2] == -1 and self.joy.axes[5] == 1:
+				rot_gripper = self.joy.axes[2] * self.rotVel
+			elif self.joy.axes[2] == 1 and self.joy.axes[5] == -1:
+				rot_gripper = self.rotVel
+			print(rot_gripper)
+			
+
 			# Open/close gripper
-			gripper_btn = self.joy.buttons[4]
+			if self.joy.axes[2] == -1.0 and self.joy.axes[5] == -1.0:
+				gripper_btn = 1
+			else:
+				gripper_btn = 0
+
 			# opening and closing gripper
 			if gripper_btn==1 and self.gripper_btn_old==0:
+				self.move_gripper = True
+
 				self.close_gripper = not(self.close_gripper)
 			self.gripper_btn_old = gripper_btn
 		else:
@@ -134,23 +157,28 @@ class joystick_control:
 			vel_Y = 0
 			vel_Z = 0
 			rot_Z = 0
+			rot_gripper = 0
 			gripper_btn = 0
 			self.gripper_btn_old = 0
+			
 
 		
-		if self.close_gripper:
-			gripper_poz = self.gripperClosedPosition
-		else:
-			gripper_poz = self.gripperOpenedPosition
+		if self.move_gripper:
+			self.move_gripper = False
+			if self.close_gripper:
+				self.gripper_poz = self.gripperClosedPosition
+			else:
+				self.gripper_poz = self.gripperOpenedPosition
 
 		# Generate points
 		self.points_X = self.points_X + vel_X * self.dt
 		self.points_Y = self.points_Y + vel_Y * self.dt
 		self.points_Z = self.points_Z + vel_Z * self.dt
 		self.point_rot_z = self.point_rot_z + rot_Z * self.dt
+		self.gripper_poz = self.gripper_poz + rot_gripper * self.dt
 
 		# Check if robot holding function is active (if left botom button is pressed)
-		current_poz = np.array([self.points_X, self.points_Y, self.points_Z, self.point_rot_z, gripper_poz])
+		current_poz = np.array([self.points_X, self.points_Y, self.points_Z, self.point_rot_z, self.gripper_poz])
 		if self.joy.axes[2] == -1 and deadman_switch:
 			# Calculate relative velocity of the delta robot 
 
@@ -196,14 +224,35 @@ class joystick_control:
 			# Positive limit
 			self.point_rot_z = self.boundries[3][1]
 
+		# Set limits for gripper
+		if self.gripper_poz < self.boundries[4][0]:
+			# Negative limit
+			self.gripper_poz = self.boundries[4][0]
+		elif self.gripper_poz > self.boundries[4][1]:
+			# Positive limit
+			self.gripper_poz = self.boundries[4][1]
+
+		
+
 		# Generate next point in trajectory
-		next_point = np.array([self.points_X, self.points_Y, self.points_Z, self.point_rot_z, gripper_poz])
-		print(self.points_Z)
+		next_point = np.array([self.points_X, self.points_Y, self.points_Z, self.point_rot_z, self.gripper_poz])
+		#print(self.points_Z)
 		#print(self.points_Y)
 
 		self.interpolator.addPoint(next_point)     
 
 		status, r_control = self.interpolator.run()
+
+		# Check if homing button was pressed -> left push button
+		if self.joy.buttons[9]:
+			# Send homing command to PLC for gripper homing
+			self.home_gripper = True
+			self.point_rot_z = 0
+			self.gripper_poz = 0
+		else:
+			self.home_gripper = False
+		
+		self.pub_zero.publish(self.home_gripper)
 
 		if status > 0:
 
@@ -237,7 +286,7 @@ if __name__ == '__main__':
 
 	# Call class
 	# Set limits in x, y, z direction and also rotation around z axis
-	boundries = [[-400, 400], [-300, 300], [-900, -600], [-180, 180] ]
+	boundries = [[-400, 400], [-300, 300], [-900, -600], [-180, 180], [-120, 120] ]
 	joy_control = joystick_control(boundries=boundries)
 	rate = rospy.Rate(500)
 

@@ -26,11 +26,17 @@ struct CmdRobot_
 
   CmdRobot_()
     : Timestamp()
-    , dq()  {
+    , dq()
+    , home_gripper(false)
+    , open_gripper(false)
+    , close_gripper(false)  {
     }
   CmdRobot_(const ContainerAllocator& _alloc)
     : Timestamp()
-    , dq(_alloc)  {
+    , dq(_alloc)
+    , home_gripper(false)
+    , open_gripper(false)
+    , close_gripper(false)  {
   (void)_alloc;
     }
 
@@ -41,6 +47,15 @@ struct CmdRobot_
 
    typedef  ::beckhoff_msgs::Vector_q5_<ContainerAllocator>  _dq_type;
   _dq_type dq;
+
+   typedef uint8_t _home_gripper_type;
+  _home_gripper_type home_gripper;
+
+   typedef uint8_t _open_gripper_type;
+  _open_gripper_type open_gripper;
+
+   typedef uint8_t _close_gripper_type;
+  _close_gripper_type close_gripper;
 
 
 
@@ -72,7 +87,10 @@ template<typename ContainerAllocator1, typename ContainerAllocator2>
 bool operator==(const ::beckhoff_msgs::CmdRobot_<ContainerAllocator1> & lhs, const ::beckhoff_msgs::CmdRobot_<ContainerAllocator2> & rhs)
 {
   return lhs.Timestamp == rhs.Timestamp &&
-    lhs.dq == rhs.dq;
+    lhs.dq == rhs.dq &&
+    lhs.home_gripper == rhs.home_gripper &&
+    lhs.open_gripper == rhs.open_gripper &&
+    lhs.close_gripper == rhs.close_gripper;
 }
 
 template<typename ContainerAllocator1, typename ContainerAllocator2>
@@ -129,12 +147,12 @@ struct MD5Sum< ::beckhoff_msgs::CmdRobot_<ContainerAllocator> >
 {
   static const char* value()
   {
-    return "272eeeecd8726ab3f273e3bf2ed33455";
+    return "998ab08fd18737e8efdb2d91fee4e00b";
   }
 
   static const char* value(const ::beckhoff_msgs::CmdRobot_<ContainerAllocator>&) { return value(); }
-  static const uint64_t static_value1 = 0x272eeeecd8726ab3ULL;
-  static const uint64_t static_value2 = 0xf273e3bf2ed33455ULL;
+  static const uint64_t static_value1 = 0x998ab08fd18737e8ULL;
+  static const uint64_t static_value2 = 0xefdb2d91fee4e00bULL;
 };
 
 template<class ContainerAllocator>
@@ -155,6 +173,9 @@ struct Definition< ::beckhoff_msgs::CmdRobot_<ContainerAllocator> >
   {
     return "time Timestamp\n"
 "Vector_q5 dq\n"
+"bool home_gripper\n"
+"bool open_gripper\n"
+"bool close_gripper\n"
 "================================================================================\n"
 "MSG: beckhoff_msgs/Vector_q5\n"
 "float32 j0\n"
@@ -182,6 +203,9 @@ namespace serialization
     {
       stream.next(m.Timestamp);
       stream.next(m.dq);
+      stream.next(m.home_gripper);
+      stream.next(m.open_gripper);
+      stream.next(m.close_gripper);
     }
 
     ROS_DECLARE_ALLINONE_SERIALIZER
@@ -205,6 +229,12 @@ struct Printer< ::beckhoff_msgs::CmdRobot_<ContainerAllocator> >
     s << indent << "dq: ";
     s << std::endl;
     Printer< ::beckhoff_msgs::Vector_q5_<ContainerAllocator> >::stream(s, indent + "  ", v.dq);
+    s << indent << "home_gripper: ";
+    Printer<uint8_t>::stream(s, indent + "  ", v.home_gripper);
+    s << indent << "open_gripper: ";
+    Printer<uint8_t>::stream(s, indent + "  ", v.open_gripper);
+    s << indent << "close_gripper: ";
+    Printer<uint8_t>::stream(s, indent + "  ", v.close_gripper);
   }
 };
 

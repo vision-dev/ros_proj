@@ -187,6 +187,8 @@ beckhoff_msgs/JointStateRobot.h
 /home/student/Asparagus_project/ros_proj/src/beckhoff_comm/src/beckhoff_msgs/JointStateRobot.h
 std_msgs/Float32.h
 /home/student/Asparagus_project/ros_proj/src/beckhoff_comm/src/std_msgs/Float32.h
+std_msgs/Bool.h
+/home/student/Asparagus_project/ros_proj/src/beckhoff_comm/src/std_msgs/Bool.h
 rospy_tutorials/Floats.h
 /home/student/Asparagus_project/ros_proj/src/beckhoff_comm/src/rospy_tutorials/Floats.h
 beckhoff_msgs/dataArray.h
@@ -929,6 +931,22 @@ ros/forwards.h
 /opt/ros/noetic/include/rosconsole/macros_generated.h
 
 /opt/ros/noetic/include/rospy_tutorials/Floats.h
+string
+-
+vector
+-
+map
+-
+ros/types.h
+-
+ros/serialization.h
+-
+ros/builtin_message_traits.h
+-
+ros/message_operations.h
+-
+
+/opt/ros/noetic/include/std_msgs/Bool.h
 string
 -
 vector

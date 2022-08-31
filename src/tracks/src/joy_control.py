@@ -18,6 +18,7 @@ from rospy_tutorials.msg import Floats
 from sensor_msgs.msg import Joy
 from geometry_msgs.msg import TwistStamped
 import time
+from std_msgs.msg import Bool
 
 import numpy as np
 import matplotlib.pyplot as plt 
@@ -46,6 +47,8 @@ class joystick_control:
 		self.start_movement_btn_old = 0
 		self.linear_movement = False
 
+		self.reset_odom = False
+
 		# Define twist
 		self.twist = TwistStamped()
 
@@ -58,6 +61,7 @@ class joystick_control:
 		rospy.Subscriber("joy", Joy, self.callback_joy)
 
 		self.pub = rospy.Publisher(self.topicName, TwistStamped,queue_size=1)
+		self.pub_reset_odom = rospy.Publisher("/robot/reset_odom", Bool,queue_size=1)
 
 	def callback_joy(self, data):
 		self.joy = data
@@ -131,6 +135,15 @@ class joystick_control:
 		self.pub.publish(self.twist)
 		
 		self.pub = rospy.Publisher(self.topicName, TwistStamped,queue_size=1)
+
+		# Reset odometry -> right push button
+		if self.joy.buttons[10]:
+			# Send homing command to PLC for gripper homing
+			self.reset_odom = True
+		else:
+			self.reset_odom = False
+		
+		self.pub_reset_odom.publish(self.reset_odom)
 
 
 

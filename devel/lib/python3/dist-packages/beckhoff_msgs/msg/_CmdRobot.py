@@ -10,11 +10,14 @@ import beckhoff_msgs.msg
 import genpy
 
 class CmdRobot(genpy.Message):
-  _md5sum = "272eeeecd8726ab3f273e3bf2ed33455"
+  _md5sum = "998ab08fd18737e8efdb2d91fee4e00b"
   _type = "beckhoff_msgs/CmdRobot"
   _has_header = False  # flag to mark the presence of a Header object
   _full_text = """time Timestamp
 Vector_q5 dq
+bool home_gripper
+bool open_gripper
+bool close_gripper
 ================================================================================
 MSG: beckhoff_msgs/Vector_q5
 float32 j0
@@ -22,8 +25,8 @@ float32 j1
 float32 j2
 float32 j3
 float32 j4"""
-  __slots__ = ['Timestamp','dq']
-  _slot_types = ['time','beckhoff_msgs/Vector_q5']
+  __slots__ = ['Timestamp','dq','home_gripper','open_gripper','close_gripper']
+  _slot_types = ['time','beckhoff_msgs/Vector_q5','bool','bool','bool']
 
   def __init__(self, *args, **kwds):
     """
@@ -33,7 +36,7 @@ float32 j4"""
     changes.  You cannot mix in-order arguments and keyword arguments.
 
     The available fields are:
-       Timestamp,dq
+       Timestamp,dq,home_gripper,open_gripper,close_gripper
 
     :param args: complete set of field values, in .msg order
     :param kwds: use keyword arguments corresponding to message field names
@@ -46,9 +49,18 @@ float32 j4"""
         self.Timestamp = genpy.Time()
       if self.dq is None:
         self.dq = beckhoff_msgs.msg.Vector_q5()
+      if self.home_gripper is None:
+        self.home_gripper = False
+      if self.open_gripper is None:
+        self.open_gripper = False
+      if self.close_gripper is None:
+        self.close_gripper = False
     else:
       self.Timestamp = genpy.Time()
       self.dq = beckhoff_msgs.msg.Vector_q5()
+      self.home_gripper = False
+      self.open_gripper = False
+      self.close_gripper = False
 
   def _get_types(self):
     """
@@ -63,7 +75,7 @@ float32 j4"""
     """
     try:
       _x = self
-      buff.write(_get_struct_2I5f().pack(_x.Timestamp.secs, _x.Timestamp.nsecs, _x.dq.j0, _x.dq.j1, _x.dq.j2, _x.dq.j3, _x.dq.j4))
+      buff.write(_get_struct_2I5f3B().pack(_x.Timestamp.secs, _x.Timestamp.nsecs, _x.dq.j0, _x.dq.j1, _x.dq.j2, _x.dq.j3, _x.dq.j4, _x.home_gripper, _x.open_gripper, _x.close_gripper))
     except struct.error as se: self._check_types(struct.error("%s: '%s' when writing '%s'" % (type(se), str(se), str(locals().get('_x', self)))))
     except TypeError as te: self._check_types(ValueError("%s: '%s' when writing '%s'" % (type(te), str(te), str(locals().get('_x', self)))))
 
@@ -82,8 +94,11 @@ float32 j4"""
       end = 0
       _x = self
       start = end
-      end += 28
-      (_x.Timestamp.secs, _x.Timestamp.nsecs, _x.dq.j0, _x.dq.j1, _x.dq.j2, _x.dq.j3, _x.dq.j4,) = _get_struct_2I5f().unpack(str[start:end])
+      end += 31
+      (_x.Timestamp.secs, _x.Timestamp.nsecs, _x.dq.j0, _x.dq.j1, _x.dq.j2, _x.dq.j3, _x.dq.j4, _x.home_gripper, _x.open_gripper, _x.close_gripper,) = _get_struct_2I5f3B().unpack(str[start:end])
+      self.home_gripper = bool(self.home_gripper)
+      self.open_gripper = bool(self.open_gripper)
+      self.close_gripper = bool(self.close_gripper)
       self.Timestamp.canon()
       return self
     except struct.error as e:
@@ -98,7 +113,7 @@ float32 j4"""
     """
     try:
       _x = self
-      buff.write(_get_struct_2I5f().pack(_x.Timestamp.secs, _x.Timestamp.nsecs, _x.dq.j0, _x.dq.j1, _x.dq.j2, _x.dq.j3, _x.dq.j4))
+      buff.write(_get_struct_2I5f3B().pack(_x.Timestamp.secs, _x.Timestamp.nsecs, _x.dq.j0, _x.dq.j1, _x.dq.j2, _x.dq.j3, _x.dq.j4, _x.home_gripper, _x.open_gripper, _x.close_gripper))
     except struct.error as se: self._check_types(struct.error("%s: '%s' when writing '%s'" % (type(se), str(se), str(locals().get('_x', self)))))
     except TypeError as te: self._check_types(ValueError("%s: '%s' when writing '%s'" % (type(te), str(te), str(locals().get('_x', self)))))
 
@@ -118,8 +133,11 @@ float32 j4"""
       end = 0
       _x = self
       start = end
-      end += 28
-      (_x.Timestamp.secs, _x.Timestamp.nsecs, _x.dq.j0, _x.dq.j1, _x.dq.j2, _x.dq.j3, _x.dq.j4,) = _get_struct_2I5f().unpack(str[start:end])
+      end += 31
+      (_x.Timestamp.secs, _x.Timestamp.nsecs, _x.dq.j0, _x.dq.j1, _x.dq.j2, _x.dq.j3, _x.dq.j4, _x.home_gripper, _x.open_gripper, _x.close_gripper,) = _get_struct_2I5f3B().unpack(str[start:end])
+      self.home_gripper = bool(self.home_gripper)
+      self.open_gripper = bool(self.open_gripper)
+      self.close_gripper = bool(self.close_gripper)
       self.Timestamp.canon()
       return self
     except struct.error as e:
@@ -129,9 +147,9 @@ _struct_I = genpy.struct_I
 def _get_struct_I():
     global _struct_I
     return _struct_I
-_struct_2I5f = None
-def _get_struct_2I5f():
-    global _struct_2I5f
-    if _struct_2I5f is None:
-        _struct_2I5f = struct.Struct("<2I5f")
-    return _struct_2I5f
+_struct_2I5f3B = None
+def _get_struct_2I5f3B():
+    global _struct_2I5f3B
+    if _struct_2I5f3B is None:
+        _struct_2I5f3B = struct.Struct("<2I5f3B")
+    return _struct_2I5f3B

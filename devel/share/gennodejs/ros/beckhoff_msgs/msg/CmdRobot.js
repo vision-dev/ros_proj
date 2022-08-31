@@ -21,6 +21,9 @@ class CmdRobot {
       // initObj === null is a special case for deserialization where we don't initialize fields
       this.Timestamp = null;
       this.dq = null;
+      this.home_gripper = null;
+      this.open_gripper = null;
+      this.close_gripper = null;
     }
     else {
       if (initObj.hasOwnProperty('Timestamp')) {
@@ -35,6 +38,24 @@ class CmdRobot {
       else {
         this.dq = new Vector_q5();
       }
+      if (initObj.hasOwnProperty('home_gripper')) {
+        this.home_gripper = initObj.home_gripper
+      }
+      else {
+        this.home_gripper = false;
+      }
+      if (initObj.hasOwnProperty('open_gripper')) {
+        this.open_gripper = initObj.open_gripper
+      }
+      else {
+        this.open_gripper = false;
+      }
+      if (initObj.hasOwnProperty('close_gripper')) {
+        this.close_gripper = initObj.close_gripper
+      }
+      else {
+        this.close_gripper = false;
+      }
     }
   }
 
@@ -44,6 +65,12 @@ class CmdRobot {
     bufferOffset = _serializer.time(obj.Timestamp, buffer, bufferOffset);
     // Serialize message field [dq]
     bufferOffset = Vector_q5.serialize(obj.dq, buffer, bufferOffset);
+    // Serialize message field [home_gripper]
+    bufferOffset = _serializer.bool(obj.home_gripper, buffer, bufferOffset);
+    // Serialize message field [open_gripper]
+    bufferOffset = _serializer.bool(obj.open_gripper, buffer, bufferOffset);
+    // Serialize message field [close_gripper]
+    bufferOffset = _serializer.bool(obj.close_gripper, buffer, bufferOffset);
     return bufferOffset;
   }
 
@@ -55,11 +82,17 @@ class CmdRobot {
     data.Timestamp = _deserializer.time(buffer, bufferOffset);
     // Deserialize message field [dq]
     data.dq = Vector_q5.deserialize(buffer, bufferOffset);
+    // Deserialize message field [home_gripper]
+    data.home_gripper = _deserializer.bool(buffer, bufferOffset);
+    // Deserialize message field [open_gripper]
+    data.open_gripper = _deserializer.bool(buffer, bufferOffset);
+    // Deserialize message field [close_gripper]
+    data.close_gripper = _deserializer.bool(buffer, bufferOffset);
     return data;
   }
 
   static getMessageSize(object) {
-    return 28;
+    return 31;
   }
 
   static datatype() {
@@ -69,7 +102,7 @@ class CmdRobot {
 
   static md5sum() {
     //Returns md5sum for a message object
-    return '272eeeecd8726ab3f273e3bf2ed33455';
+    return '998ab08fd18737e8efdb2d91fee4e00b';
   }
 
   static messageDefinition() {
@@ -77,6 +110,9 @@ class CmdRobot {
     return `
     time Timestamp
     Vector_q5 dq
+    bool home_gripper
+    bool open_gripper
+    bool close_gripper
     ================================================================================
     MSG: beckhoff_msgs/Vector_q5
     float32 j0
@@ -105,6 +141,27 @@ class CmdRobot {
     }
     else {
       resolved.dq = new Vector_q5()
+    }
+
+    if (msg.home_gripper !== undefined) {
+      resolved.home_gripper = msg.home_gripper;
+    }
+    else {
+      resolved.home_gripper = false
+    }
+
+    if (msg.open_gripper !== undefined) {
+      resolved.open_gripper = msg.open_gripper;
+    }
+    else {
+      resolved.open_gripper = false
+    }
+
+    if (msg.close_gripper !== undefined) {
+      resolved.close_gripper = msg.close_gripper;
+    }
+    else {
+      resolved.close_gripper = false
     }
 
     return resolved;

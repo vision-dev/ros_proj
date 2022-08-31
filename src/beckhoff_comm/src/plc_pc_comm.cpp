@@ -7,6 +7,7 @@
 #include "beckhoff_msgs/CmdRobot.h"
 #include "beckhoff_msgs/JointStateRobot.h"
 #include "std_msgs/Float32.h"
+#include "std_msgs/Bool.h"
 #include "rospy_tutorials/Floats.h"
 // Raw message for sending to PLC
 #include "beckhoff_msgs/dataArray.h"
@@ -45,6 +46,9 @@ int16_t counter;
 auto start = std::chrono::steady_clock::now();
 auto end = std::chrono::steady_clock::now();
 
+float home_gripper = false;
+float reset_odom = false;
+
 
 // Notification callback function - read alphas from PLC and publish on topic
 void callback_delta_from_plc(const AmsAddr* pAddr, const AdsNotificationHeader* pNotification, uint32_t hUser){
@@ -57,7 +61,7 @@ void callback_delta_from_plc(const AmsAddr* pAddr, const AdsNotificationHeader* 
 	}
 	
 	//if (counter==1){
-	//	start = std::chrono::steady_clock::now();
+	//start = std::chrono::steady_clock::now();
 	//}
 	//else{
 	//	end = std::chrono::steady_clock::now();
@@ -111,22 +115,28 @@ void callback_delta_to_plc(const beckhoff_msgs::CmdRobot& data){
 
 	// Timestamp, omegas to PLC
 	float now_time = float(data.Timestamp.sec) + float(data.Timestamp.nsec) / 10e-9;
-	delta_to_plc = {now_time, data.dq.j0, data.dq.j1, data.dq.j2, data.dq.j3, data.dq.j4,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	delta_to_plc = {now_time, data.dq.j0, data.dq.j1, data.dq.j2, data.dq.j3, data.dq.j4, home_gripper, float(data.open_gripper) , float(data.close_gripper),0,0,0,0,0,0,0,0,0,0,0};
 	//delta_to_plc = { 0, 0.0, 0, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
 	//std::cout <<" ADS write " << now_time << '\n';
+	std::cout <<" Open gripper " << data << '\n';
 	
-	//if (counter==1)
-	//{
-	//	end = std::chrono::steady_clock::now();
+	if (counter==1)
+	{
+		end = std::chrono::steady_clock::now();
 
-	//	std::cout << "Elapsed time in microseconds: "
-	//	<< std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
-	//	<< " ms" << std::endl;
+		//std::cout << "Elapsed time in microseconds: "
+		//<< std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+		//<< " " << std::endl;
 
-	//	counter = 0;
-	//}
+		counter = 0;
+	}
+}	
+
+void callback_zero_gripper(const std_msgs::Bool& data){
+	home_gripper = float(data.data);
 }
+
 
 // Notification callback function - read odometry data
 void callback_cat_from_plc(const AmsAddr* pAddr, const AdsNotificationHeader* pNotification, uint32_t hUser){
@@ -172,11 +182,15 @@ void callback_cat_to_plc(const geometry_msgs::TwistStamped& data){
 	// Send linear and angular velocities, timestamp to PLC
 	// Timestamp, omegas to PLC
 	float now_time = float(data.header.stamp.sec) + float(data.header.stamp.nsec) / 10e-9;
-	tracks_to_plc = {now_time, float(data.twist.linear.x), float(data.twist.angular.z), 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	tracks_to_plc = {now_time, float(data.twist.linear.x), float(data.twist.angular.z), reset_odom, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	//delta_to_plc = { 0, 0.0, 0, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
 	//std::cout <<" ADS write " << float(data.twist.linear.x) << '\n';
     
+}
+
+void callback_reset_odom(const std_msgs::Bool& data){
+	reset_odom = float(data.data);
 }
 
 
@@ -192,6 +206,8 @@ int main(int argc, char **argv)
 
     //subscriber
 	ros::Subscriber omegas_sub = nh.subscribe("/robot/cmd", 1, callback_delta_to_plc);
+	// Subscribe to cmd for gripper zeroing
+	ros::Subscriber zero_sub = nh.subscribe("/robot/zero", 1, callback_zero_gripper);
 	
     // Publish alphas (angles in degrees) from delta robot joints
     delta_pub = nh.advertise<beckhoff_msgs::JointStateRobot >("/robot/joint_state", 1);
@@ -205,6 +221,7 @@ int main(int argc, char **argv)
     
 	//subscriber
 	ros::Subscriber tracks_sub = nh.subscribe("/tracks/twist_cmd", 1, callback_cat_to_plc);
+	ros::Subscriber odometry_reset_sub = nh.subscribe("/tracks/reset_odom", 1, callback_reset_odom);
 	
     // Publish velocity and global position of tracks robot
     tracks_vel_pub  = nh.advertise<geometry_msgs::TwistStamped >("/tracks/twist_state", 1);
