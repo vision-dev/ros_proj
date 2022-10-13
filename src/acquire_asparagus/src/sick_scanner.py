@@ -130,7 +130,7 @@ def cloud(msg):
 
     y_limit_min = y_limit[0]
     y_limit_max = y_limit[1]
-    z_min_limit = 0.02
+    z_min_limit = 0.03
     z_max_limit = 0.4
 
     # or a list of the individual points which is less efficient

@@ -60,6 +60,7 @@ all: geometry2/tf2/all
 all: geometry2/tf2_bullet/all
 all: geometry2/tf2_eigen/all
 all: acquire_asparagus/all
+all: asparagus_robot_bringup/all
 all: beckhoff_msgs/all
 all: beckhoff_comm/all
 all: delta_robot/all
@@ -86,6 +87,7 @@ preinstall: geometry2/tf2/preinstall
 preinstall: geometry2/tf2_bullet/preinstall
 preinstall: geometry2/tf2_eigen/preinstall
 preinstall: acquire_asparagus/preinstall
+preinstall: asparagus_robot_bringup/preinstall
 preinstall: beckhoff_msgs/preinstall
 preinstall: beckhoff_comm/preinstall
 preinstall: delta_robot/preinstall
@@ -117,6 +119,7 @@ clean: geometry2/tf2/clean
 clean: geometry2/tf2_bullet/clean
 clean: geometry2/tf2_eigen/clean
 clean: acquire_asparagus/clean
+clean: asparagus_robot_bringup/clean
 clean: beckhoff_msgs/clean
 clean: beckhoff_comm/clean
 clean: delta_robot/clean
@@ -152,6 +155,24 @@ acquire_asparagus/preinstall:
 acquire_asparagus/clean:
 
 .PHONY : acquire_asparagus/clean
+
+#=============================================================================
+# Directory level rules for directory asparagus_robot_bringup
+
+# Recursive "all" directory target.
+asparagus_robot_bringup/all:
+
+.PHONY : asparagus_robot_bringup/all
+
+# Recursive "preinstall" directory target.
+asparagus_robot_bringup/preinstall:
+
+.PHONY : asparagus_robot_bringup/preinstall
+
+# Recursive "clean" directory target.
+asparagus_robot_bringup/clean:
+
+.PHONY : asparagus_robot_bringup/clean
 
 #=============================================================================
 # Directory level rules for directory beckhoff_comm

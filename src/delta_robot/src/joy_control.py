@@ -137,7 +137,7 @@ class joystick_control:
 				rot_gripper = self.joy.axes[2] * self.rotVel
 			elif self.joy.axes[2] == 1 and self.joy.axes[5] == -1:
 				rot_gripper = self.rotVel
-			print(rot_gripper)
+			#print(rot_gripper)
 			
 
 			# Open/close gripper
@@ -282,7 +282,7 @@ class joystick_control:
 
 if __name__ == '__main__':
 	rospy.set_param('/robot_max_vel', 300)
-	rospy.set_param('/robot_rot_vel', 50)
+	rospy.set_param('/robot_rot_vel', 200)
 
 	# Call class
 	# Set limits in x, y, z direction and also rotation around z axis

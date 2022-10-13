@@ -429,6 +429,12 @@ actionlib_DIR:PATH=/opt/ros/noetic/share/actionlib/cmake
 actionlib_msgs_DIR:PATH=/opt/ros/noetic/share/actionlib_msgs/cmake
 
 //Value Computed by CMake
+asparagus_robot_bringup_BINARY_DIR:STATIC=/home/student/Asparagus_project/ros_proj/build/asparagus_robot_bringup
+
+//Value Computed by CMake
+asparagus_robot_bringup_SOURCE_DIR:STATIC=/home/student/Asparagus_project/ros_proj/src/asparagus_robot_bringup
+
+//Value Computed by CMake
 beckhoff_comm_BINARY_DIR:STATIC=/home/student/Asparagus_project/ros_proj/build/beckhoff_comm
 
 //Value Computed by CMake
@@ -896,7 +902,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=25
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=26
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP

@@ -55,6 +55,9 @@ class motion_planning:
 		self.new_path_request = True
 		self.z_offset = -900
 
+		self.count_time = 0
+		self.start_time = 0
+
 		# Interpolation
 		dT_ms = int(1000/1000)
 
@@ -67,6 +70,13 @@ class motion_planning:
 
 	
 	def callback_track_pose(self, data):
+		if self.count_time == 0:
+			self.start_time = time.time()
+			self.count_time = self.count_time + 1
+		else:
+			print(time.time() - self.start_time)
+			self.count_time = 0
+
 		self.track_pose = data
 
 		# Start robot motion
@@ -216,8 +226,8 @@ class motion_planning:
 
 		
 
-		if self.num_of_asparagus < 1:
-			self.step_path = 0
+		#if self.num_of_asparagus < 1:
+		#	self.step_path = 0
 			#return
 
 		if self.step_path == 0:
@@ -230,6 +240,8 @@ class motion_planning:
 			self.try_angle = 0
 			self.gripper_poz = np.zeros(4)
 			self.picked_asparagus_flag_arr = np.full(self.num_of_asparagus, False)
+
+			print(self.num_of_asparagus)
 
 			if self.num_of_asparagus > 0:
 				self.step_path = 0.5
@@ -296,7 +308,6 @@ class motion_planning:
 					self.dist_array[idx] = dist
 				else:
 					self.dist_array[idx] = 0
-			print
 
 			self.step_path = 3
 
@@ -424,7 +435,7 @@ class motion_planning:
 	
 	def robot_motion(self):
 
-		#print('step_motion = ',self.step_motion)
+		print('step_motion = ',self.step_motion)
 		#print('Path calculated = ', self.path_calculated)
 		#print('New path request = ', self.new_path_request)
 
@@ -530,7 +541,7 @@ class motion_planning:
 			qd_radians = np.zeros(5)
 			temp = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
 			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
-			angle_error = [6, 6, 6, 1, 1]
+			angle_error = [8, 8, 8, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:
@@ -565,11 +576,15 @@ class motion_planning:
 			qd_radians = np.zeros(5)
 			temp = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
 			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
-			angle_error = [0.5, 0.5, 0.5, 1, 1]
+			angle_error = [5, 5, 5, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:
 				self.robot_in_poz = False
+
+				# Open gripper
+				self.set_poz[4] = self.gripper_open_poz
+
 				self.start_gripper_opening = time.time()
 
 				self.step_motion = 8
@@ -594,3 +609,11 @@ if __name__ == "__main__":
 
 	path_planning = motion_planning(xy_limits=xy_limits)
 	rospy.spin()
+	
+	#path_planning = motion_planning(xy_limits=xy_limits)
+
+	#rate = rospy.Rate(500)
+
+	#while not rospy.is_shutdown():
+	#	path_planning = motion_planning(xy_limits=xy_limits)
+	#	rate.sleep()

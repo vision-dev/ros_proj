@@ -1,0 +1,34 @@
+<launch>
+        
+        <!-- 1) roslaunch sick_scan sick_lms_1xx.launch hostname:=192.168.1.100
+        2) rosrun transformations sensor_to_robot.py laser 0.55 0.05 0.5 0 2.36 0
+        3) rosrun transformations robot_to_global.py
+        4) rosrun beckhoff_comm plc_pc_comm
+        5) rosrun joy joy_node
+        6) rosrun tracks joy_control.py
+        7) rosrun delta_robot control_r2omegas.py
+        8) rosrun acquire_asparagus sick_scanner.py
+        9) rosrun acquire_asparagus sick_get_global_cloud.py
+        10) rosrun acquire_asparagus detect_asparagus.py
+        11) rosrun delta_robot motion_planning.py -->
+
+
+
+        <include file="$(find sick_scan)/launch/sick_lms_1xx.launch">
+            <arg name="hostname" value="192.168.1.100"/>
+        </include>
+
+        <node name="sensor_to_robot" pkg="transformations" type="sensor_to_robot.py" args="laser 0.55 0.05 0.5 0 2.36 0"/>
+        <node name="robot_to_global" pkg="transformations" type="robot_to_global.py" />
+        <node name="plc_pc_comm" pkg="beckhoff_comm" type="plc_pc_comm" />
+        <node name="robot_to_global" pkg="transformations" type="robot_to_global.py" />
+        <node name="robot_to_global" pkg="transformations" type="robot_to_global.py" />
+        <node name="robot_to_global" pkg="transformations" type="robot_to_global.py" />
+        <node name="robot_to_global" pkg="transformations" type="robot_to_global.py" />
+        <node name="robot_to_global" pkg="transformations" type="robot_to_global.py" />
+        <node name="robot_to_global" pkg="transformations" type="robot_to_global.py" />
+        <node name="robot_to_global" pkg="transformations" type="robot_to_global.py" />
+        
+
+
+</launch>

@@ -356,14 +356,14 @@ class detect_asparagus:
 
 					dist_array[idx2] = dist
 
-				print('new_point_arr = ', new_point_arr)
+				#print('new_point_arr = ', new_point_arr)
 				new_point = np.all(new_point_arr == True)
-				print('new_point = ', new_point)
-				print('dist array = ', dist_array)
+				#print('new_point = ', new_point)
+				#print('dist array = ', dist_array)
 
 				if new_point:
 					self.aspargus = np.append(self.aspargus,[[x_median[idx], y_median[idx], z_pick_height, harvest_point_valid[idx]]], axis = 0)
-		print('self.aspargus = ',self.aspargus)
+		#print('self.aspargus = ',self.aspargus)
 		'''
 		for idx in range(num_of_pick_asparagus):
 			# Check if point was already saved
@@ -429,11 +429,11 @@ class detect_asparagus:
 			flatten_aspargus = np.asarray(filtered_points, dtype=np.float32)
 			flatten_aspargus = flatten_aspargus.flatten()
 
-			print(self.aspargus)
-			print('Filtered points = ', filtered_points)
+			#print(self.aspargus)
+			#print('Filtered points = ', filtered_points)
 
 			self.asparagus_location_pub.publish(flatten_aspargus)
-			print("Elapsed time = ", time.time() - self.start_time)
+			#print("Elapsed time = ", time.time() - self.start_time)
 
 	def filter_pick_points(self, min_dist):
 		pick_points_0 = np.copy(self.aspargus)
