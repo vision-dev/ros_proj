@@ -6,6 +6,8 @@
   :components ((:file "_package")
     (:file "CmdRobot" :depends-on ("_package_CmdRobot"))
     (:file "_package_CmdRobot" :depends-on ("_package"))
+    (:file "CmdTracks" :depends-on ("_package_CmdTracks"))
+    (:file "_package_CmdTracks" :depends-on ("_package"))
     (:file "JointStateRobot" :depends-on ("_package_JointStateRobot"))
     (:file "_package_JointStateRobot" :depends-on ("_package"))
     (:file "Vector_q5" :depends-on ("_package_Vector_q5"))

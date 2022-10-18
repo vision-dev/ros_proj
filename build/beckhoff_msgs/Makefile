@@ -78,6 +78,17 @@ install/strip/fast: preinstall/fast
 	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
 .PHONY : install/strip/fast
 
+# Special rule for the target test
+test:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running tests..."
+	/usr/bin/ctest --force-new-ctest-process $(ARGS)
+.PHONY : test
+
+# Special rule for the target test
+test/fast: test
+
+.PHONY : test/fast
+
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
@@ -123,17 +134,6 @@ install/local/fast: preinstall/fast
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Installing only the local directory..."
 	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
 .PHONY : install/local/fast
-
-# Special rule for the target test
-test:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running tests..."
-	/usr/bin/ctest --force-new-ctest-process $(ARGS)
-.PHONY : test
-
-# Special rule for the target test
-test/fast: test
-
-.PHONY : test/fast
 
 # The main all target
 all: cmake_check_build_system
@@ -243,21 +243,6 @@ beckhoff_msgs_genlisp/fast:
 .PHONY : beckhoff_msgs_genlisp/fast
 
 # Convenience name for target.
-beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs.dir/rule:
-	cd /home/student/Asparagus_project/ros_proj/build && $(MAKE) -f CMakeFiles/Makefile2 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs.dir/rule
-.PHONY : beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs.dir/rule
-
-# Convenience name for target.
-beckhoff_msgs_generate_messages_nodejs: beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs.dir/rule
-
-.PHONY : beckhoff_msgs_generate_messages_nodejs
-
-# fast build rule for target.
-beckhoff_msgs_generate_messages_nodejs/fast:
-	cd /home/student/Asparagus_project/ros_proj/build && $(MAKE) -f beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs.dir/build.make beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs.dir/build
-.PHONY : beckhoff_msgs_generate_messages_nodejs/fast
-
-# Convenience name for target.
 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_py.dir/rule:
 	cd /home/student/Asparagus_project/ros_proj/build && $(MAKE) -f CMakeFiles/Makefile2 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_py.dir/rule
 .PHONY : beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_py.dir/rule
@@ -286,6 +271,51 @@ rosgraph_msgs_generate_messages_lisp: beckhoff_msgs/CMakeFiles/rosgraph_msgs_gen
 rosgraph_msgs_generate_messages_lisp/fast:
 	cd /home/student/Asparagus_project/ros_proj/build && $(MAKE) -f beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_lisp.dir/build.make beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_lisp.dir/build
 .PHONY : rosgraph_msgs_generate_messages_lisp/fast
+
+# Convenience name for target.
+beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs.dir/rule:
+	cd /home/student/Asparagus_project/ros_proj/build && $(MAKE) -f CMakeFiles/Makefile2 beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs.dir/rule
+.PHONY : beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs.dir/rule
+
+# Convenience name for target.
+beckhoff_msgs_generate_messages_nodejs: beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs.dir/rule
+
+.PHONY : beckhoff_msgs_generate_messages_nodejs
+
+# fast build rule for target.
+beckhoff_msgs_generate_messages_nodejs/fast:
+	cd /home/student/Asparagus_project/ros_proj/build && $(MAKE) -f beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs.dir/build.make beckhoff_msgs/CMakeFiles/beckhoff_msgs_generate_messages_nodejs.dir/build
+.PHONY : beckhoff_msgs_generate_messages_nodejs/fast
+
+# Convenience name for target.
+beckhoff_msgs/CMakeFiles/_beckhoff_msgs_generate_messages_check_deps_CmdTracks.dir/rule:
+	cd /home/student/Asparagus_project/ros_proj/build && $(MAKE) -f CMakeFiles/Makefile2 beckhoff_msgs/CMakeFiles/_beckhoff_msgs_generate_messages_check_deps_CmdTracks.dir/rule
+.PHONY : beckhoff_msgs/CMakeFiles/_beckhoff_msgs_generate_messages_check_deps_CmdTracks.dir/rule
+
+# Convenience name for target.
+_beckhoff_msgs_generate_messages_check_deps_CmdTracks: beckhoff_msgs/CMakeFiles/_beckhoff_msgs_generate_messages_check_deps_CmdTracks.dir/rule
+
+.PHONY : _beckhoff_msgs_generate_messages_check_deps_CmdTracks
+
+# fast build rule for target.
+_beckhoff_msgs_generate_messages_check_deps_CmdTracks/fast:
+	cd /home/student/Asparagus_project/ros_proj/build && $(MAKE) -f beckhoff_msgs/CMakeFiles/_beckhoff_msgs_generate_messages_check_deps_CmdTracks.dir/build.make beckhoff_msgs/CMakeFiles/_beckhoff_msgs_generate_messages_check_deps_CmdTracks.dir/build
+.PHONY : _beckhoff_msgs_generate_messages_check_deps_CmdTracks/fast
+
+# Convenience name for target.
+beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir/rule:
+	cd /home/student/Asparagus_project/ros_proj/build && $(MAKE) -f CMakeFiles/Makefile2 beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir/rule
+.PHONY : beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir/rule
+
+# Convenience name for target.
+rosgraph_msgs_generate_messages_cpp: beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir/rule
+
+.PHONY : rosgraph_msgs_generate_messages_cpp
+
+# fast build rule for target.
+rosgraph_msgs_generate_messages_cpp/fast:
+	cd /home/student/Asparagus_project/ros_proj/build && $(MAKE) -f beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir/build.make beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir/build
+.PHONY : rosgraph_msgs_generate_messages_cpp/fast
 
 # Convenience name for target.
 beckhoff_msgs/CMakeFiles/_beckhoff_msgs_generate_messages_check_deps_Vector_q5.dir/rule:
@@ -572,21 +602,6 @@ beckhoff_msgs_genpy/fast:
 	cd /home/student/Asparagus_project/ros_proj/build && $(MAKE) -f beckhoff_msgs/CMakeFiles/beckhoff_msgs_genpy.dir/build.make beckhoff_msgs/CMakeFiles/beckhoff_msgs_genpy.dir/build
 .PHONY : beckhoff_msgs_genpy/fast
 
-# Convenience name for target.
-beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir/rule:
-	cd /home/student/Asparagus_project/ros_proj/build && $(MAKE) -f CMakeFiles/Makefile2 beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir/rule
-.PHONY : beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir/rule
-
-# Convenience name for target.
-rosgraph_msgs_generate_messages_cpp: beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir/rule
-
-.PHONY : rosgraph_msgs_generate_messages_cpp
-
-# fast build rule for target.
-rosgraph_msgs_generate_messages_cpp/fast:
-	cd /home/student/Asparagus_project/ros_proj/build && $(MAKE) -f beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir/build.make beckhoff_msgs/CMakeFiles/rosgraph_msgs_generate_messages_cpp.dir/build
-.PHONY : rosgraph_msgs_generate_messages_cpp/fast
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -600,9 +615,12 @@ help:
 	@echo "... roscpp_generate_messages_lisp"
 	@echo "... install/strip"
 	@echo "... beckhoff_msgs_genlisp"
-	@echo "... beckhoff_msgs_generate_messages_nodejs"
 	@echo "... beckhoff_msgs_generate_messages_py"
 	@echo "... rosgraph_msgs_generate_messages_lisp"
+	@echo "... beckhoff_msgs_generate_messages_nodejs"
+	@echo "... _beckhoff_msgs_generate_messages_check_deps_CmdTracks"
+	@echo "... test"
+	@echo "... rosgraph_msgs_generate_messages_cpp"
 	@echo "... _beckhoff_msgs_generate_messages_check_deps_Vector_q5"
 	@echo "... roscpp_generate_messages_nodejs"
 	@echo "... roscpp_generate_messages_py"
@@ -626,8 +644,6 @@ help:
 	@echo "... beckhoff_msgs_gennodejs"
 	@echo "... _beckhoff_msgs_generate_messages_check_deps_JointStateRobot"
 	@echo "... beckhoff_msgs_genpy"
-	@echo "... rosgraph_msgs_generate_messages_cpp"
-	@echo "... test"
 .PHONY : help
 
 

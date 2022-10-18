@@ -3,6 +3,8 @@
   (:export
    "<CMDROBOT>"
    "CMDROBOT"
+   "<CMDTRACKS>"
+   "CMDTRACKS"
    "<JOINTSTATEROBOT>"
    "JOINTSTATEROBOT"
    "<VECTOR_Q5>"

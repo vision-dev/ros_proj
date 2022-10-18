@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
   "/home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/CmdRobot.js"
+  "/home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/CmdTracks.js"
   "/home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/JointStateRobot.js"
   "/home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/Vector_q5.js"
   "/home/student/Asparagus_project/ros_proj/devel/share/gennodejs/ros/beckhoff_msgs/msg/array5.js"

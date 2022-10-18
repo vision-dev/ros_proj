@@ -123,6 +123,7 @@ class velocity_control:
 
 			# angular error - joint coordinates
 			e = qd - self.qq
+			print(e)
 			#de = (e - self.e_old) / self.dt
 			#de = self.dqd - self.dq
 			de = -self.dq
@@ -165,7 +166,7 @@ class velocity_control:
 			RobotCmd.dq.j1 = dq[1]
 			RobotCmd.dq.j2 = dq[2]
 			RobotCmd.dq.j3 = dq[3]
-			print(self.r_control[4])
+			#print(self.r_control[4])
 			if self.r_control[4] == 0.0:
 				RobotCmd.dq.j4 = 0
 				# Open gripper
@@ -181,8 +182,8 @@ class velocity_control:
 				RobotCmd.open_gripper  = 0
 				RobotCmd.close_gripper = 0
 
-			print('Open gripper = ', RobotCmd.open_gripper)
-			print('Close gripper = ', RobotCmd.close_gripper)
+			#print('Open gripper = ', RobotCmd.open_gripper)
+			#print('Close gripper = ', RobotCmd.close_gripper)
 
 			#print('--------------------------')
 			#print(data_to_send)

@@ -286,7 +286,7 @@ if __name__ == '__main__':
 
 	# Call class
 	# Set limits in x, y, z direction and also rotation around z axis
-	boundries = [[-400, 400], [-300, 300], [-900, -600], [-180, 180], [-120, 120] ]
+	boundries = [[-400, 400], [-300, 300], [-900, -600], [-180, 180], [-120, 0] ]
 	joy_control = joystick_control(boundries=boundries)
 	rate = rospy.Rate(500)
 

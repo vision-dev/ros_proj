@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
   "/home/student/Asparagus_project/ros_proj/devel/share/common-lisp/ros/beckhoff_msgs/msg/CmdRobot.lisp"
+  "/home/student/Asparagus_project/ros_proj/devel/share/common-lisp/ros/beckhoff_msgs/msg/CmdTracks.lisp"
   "/home/student/Asparagus_project/ros_proj/devel/share/common-lisp/ros/beckhoff_msgs/msg/JointStateRobot.lisp"
   "/home/student/Asparagus_project/ros_proj/devel/share/common-lisp/ros/beckhoff_msgs/msg/Vector_q5.lisp"
   "/home/student/Asparagus_project/ros_proj/devel/share/common-lisp/ros/beckhoff_msgs/msg/array5.lisp"

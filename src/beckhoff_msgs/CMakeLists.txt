@@ -57,6 +57,7 @@ find_package(catkin REQUIRED COMPONENTS
    catReceive.msg
    catSend.msg
    dataArray.msg
+   CmdTracks.msg
  )
 
 ## Generate services in the 'srv' folder

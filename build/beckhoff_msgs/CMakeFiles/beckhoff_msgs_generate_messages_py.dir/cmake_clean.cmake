@@ -1,5 +1,6 @@
 file(REMOVE_RECURSE
   "/home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_CmdRobot.py"
+  "/home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_CmdTracks.py"
   "/home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_JointStateRobot.py"
   "/home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/_Vector_q5.py"
   "/home/student/Asparagus_project/ros_proj/devel/lib/python3/dist-packages/beckhoff_msgs/msg/__init__.py"

@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-from tkinter.tix import Tree
-from webbrowser import Elinks
 import rospy
 from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
@@ -10,6 +8,8 @@ from beckhoff_msgs.msg import JointStateRobot
 import numpy as np
 import math
 import time
+from beckhoff_msgs.msg import CmdTracks
+
 
 from supportingFunctions.inverseKinematics_Phi import deltaInverseKin
 from supportingFunctions.minJerkInterpolator import minJerkInterpolator
@@ -58,6 +58,8 @@ class motion_planning:
 		self.count_time = 0
 		self.start_time = 0
 
+		self.stop_platform = False
+
 		# Interpolation
 		dT_ms = int(1000/1000)
 
@@ -66,16 +68,18 @@ class motion_planning:
 		self.rotVel = 50
 		self.maxSpeed = np.array([self.maxVel*10, self.maxVel*10, self.maxVel*10, self.rotVel*5, self.rotVel*5])
 		self.interpolator = minJerkInterpolator(maxSpeed=self.maxSpeed, dT=dT_ms*0.001, printAll=False)
+
+		self.robot_in_poz = False
+		
+		# Tracks cmd
+		self.cmdTracks = CmdTracks()
+
 		self.pub = rospy.Publisher('/r_control', numpy_msg(Floats),queue_size=1)
+		self.pub_cmdTrack = rospy.Publisher('/tracks/cmd', CmdTracks, queue_size=1)
 
 	
 	def callback_track_pose(self, data):
-		if self.count_time == 0:
-			self.start_time = time.time()
-			self.count_time = self.count_time + 1
-		else:
-			print(time.time() - self.start_time)
-			self.count_time = 0
+		
 
 		self.track_pose = data
 
@@ -90,9 +94,17 @@ class motion_planning:
 		#status = 0
 		if status > 0:
 
+			if self.count_time == 0:
+				self.start_time = time.time()
+				self.count_time = self.count_time + 1
+			else:
+				#print(time.time() - self.start_time)
+				self.count_time = 0
+
 			r_control = r_control.astype(dtype=np.float32)
 			
 			self.pub.publish(r_control)
+
 
 	def callback_robot_angles(self, data):
 		self.qq = [data.qq.j0, data.qq.j1, data.qq.j2, data.qq.j3, data.qq.j4]
@@ -435,13 +447,13 @@ class motion_planning:
 	
 	def robot_motion(self):
 
-		print('step_motion = ',self.step_motion)
+		#print('step_motion = ',self.step_motion)
 		#print('Path calculated = ', self.path_calculated)
 		#print('New path request = ', self.new_path_request)
 
 		
 		# Calculate desired angles in robot axis
-		angle_error = [1, 1, 1, 1, 1]
+		angle_error = [1, 1, 1, 1, 1]			
 
 		if self.step_motion == 0:
 			self.robot_in_poz = False
@@ -461,12 +473,20 @@ class motion_planning:
 			angle_error = [0.5, 0.5, 0.5, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 			if self.robot_in_poz:
+				print(self.robot_in_poz)
 				self.robot_in_poz = False
 				self.step_motion = 2
 
 		elif self.step_motion == 2:
 			# Wait for path to be calculated
 			if self.path_calculated:
+				# Stop platform motion
+				self.cmdTracks.stop_tracks  = True
+				self.cmdTracks.start_tracks = False
+
+				# Publish cmd
+				self.pub_cmdTrack.publish(self.cmdTracks)
+
 				self.step_motion = 3
 
 		elif self.step_motion == 3:
@@ -488,6 +508,7 @@ class motion_planning:
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:
+				print(self.robot_in_poz)
 				self.robot_in_poz = False
 				self.path_idx = self.path_idx + 1
 
@@ -523,6 +544,12 @@ class motion_planning:
 			elapsed_time = time.time() - self.start_gripper_closing
 
 			if elapsed_time > self.gripper_time:
+				self.cmdTracks.stop_tracks  = False
+				self.cmdTracks.start_tracks = True
+
+				# Publish cmd
+				self.pub_cmdTrack.publish(self.cmdTracks)
+
 				self.step_motion = 6
 		
 		elif self.step_motion == 6:
@@ -545,6 +572,7 @@ class motion_planning:
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:
+				print(self.robot_in_poz)
 				self.robot_in_poz = False
 
 				# Save position of picked asparagus
@@ -580,6 +608,7 @@ class motion_planning:
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:
+				print(self.robot_in_poz)
 				self.robot_in_poz = False
 
 				# Open gripper

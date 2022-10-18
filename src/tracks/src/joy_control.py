@@ -19,6 +19,7 @@ from sensor_msgs.msg import Joy
 from geometry_msgs.msg import TwistStamped
 import time
 from std_msgs.msg import Bool
+from beckhoff_msgs.msg import CmdTracks
 
 import numpy as np
 import matplotlib.pyplot as plt 
@@ -59,12 +60,19 @@ class joystick_control:
 		rospy.init_node(nodeName)
 
 		rospy.Subscriber("joy", Joy, self.callback_joy)
+		# Read commands from motion planning program
+		self.cmdTracks = CmdTracks()
+		rospy.Subscriber('/tracks/cmd', CmdTracks, self.callback_cmd_tracks)
 
 		self.pub = rospy.Publisher(self.topicName, TwistStamped,queue_size=1)
 		self.pub_reset_odom = rospy.Publisher("/robot/reset_odom", Bool,queue_size=1)
 
 	def callback_joy(self, data):
 		self.joy = data
+
+	def callback_cmd_tracks(self, data):
+		self.cmdTracks = data
+		#print(self.cmdTracks)
 
 	def generate_points(self):
 		# Determine velocities in all directions
@@ -114,6 +122,10 @@ class joystick_control:
 				self.linear_movement = False
 			self.start_movement_btn_old = start_movement_btn
 			
+		# Check if we received movement cmd from motion control program
+		if self.cmdTracks.stop_tracks:
+			linear_velocity = 0
+			self.linear_movement = False
 
 		# Check if constant movement is active
 		if self.linear_movement:
