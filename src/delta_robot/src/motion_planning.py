@@ -49,7 +49,7 @@ class motion_planning:
 		self.set_poz = np.copy(self.home_poz)
 		self.step_motion = 0
 		# Time gripper needs to close
-		self.gripper_time = 1
+		self.gripper_time = 3
 		# Set place position for asparagus
 		self.place_poz = [[0, 0.2, 0.1, 0, self.gripper_close_poz], [0, -0.2, 0.1, 0, self.gripper_close_poz]]
 		self.new_path_request = True
@@ -77,33 +77,54 @@ class motion_planning:
 		self.pub = rospy.Publisher('/r_control', numpy_msg(Floats),queue_size=1)
 		self.pub_cmdTrack = rospy.Publisher('/tracks/cmd', CmdTracks, queue_size=1)
 
+		self.timeflag = 0
+		self.print_step = 0
+		self.pub_idx = 0
+
 	
 	def callback_track_pose(self, data):
-		
-
 		self.track_pose = data
 
 		# Start robot motion
 		self.robot_motion()
 
+		#qd_radians = np.zeros(5)
 		self.next_point = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
+
+		qd_radians, _ = deltaInverseKin(self.next_point[0], self.next_point[1], self.next_point[2], self.next_point[3])
+		desired_angle_deg = 180 / np.pi *(qd_radians)
+		
+		print("self.next_point  = ", self.next_point)
+		print("qd  = ", desired_angle_deg)
 
 		self.interpolator.addPoint(self.next_point)     
 
 		status, r_control = self.interpolator.run()
 		#status = 0
-		if status > 0:
+		if status > 0 and self.pub_idx == 1:
 
-			if self.count_time == 0:
-				self.start_time = time.time()
-				self.count_time = self.count_time + 1
-			else:
-				#print(time.time() - self.start_time)
-				self.count_time = 0
-
+			self.pub_idx = 0
 			r_control = r_control.astype(dtype=np.float32)
+			print("r_control = ", r_control)
+
+			qd_radians, _ = deltaInverseKin(r_control[0], r_control[1], r_control[2], r_control[3])
+			desired_angle_deg = 180 / np.pi *(qd_radians)
+			print("qd 2  = ", desired_angle_deg)
+
+			self.next_point = self.next_point.astype(dtype=np.float32)
 			
-			self.pub.publish(r_control)
+			self.pub.publish(self.next_point)
+		
+		self.pub_idx = self.pub_idx + 1
+
+		if self.count_time == 0:
+			self.start_time = time.time()
+		if self.count_time == 1:
+			#print(time.time() - self.start_time)
+			self.count_time = 0
+
+		self.count_time = self.count_time + 1
+		
 
 
 	def callback_robot_angles(self, data):
@@ -121,6 +142,7 @@ class motion_planning:
 		# Filter points that are inside work space of a delta robot
 		if len(self.asparagus_locations) > 0:
 			self.locations_out_of_range(self.asparagus_locations)
+			#self.cleaned_locations = self.asparagus_locations
 		# Plan path for robot
 		if self.new_path_request:
 			self.path_planning(min_dist=0.03, pretarget_dist=0.15, calculation_step=0.01)
@@ -154,6 +176,7 @@ class motion_planning:
 			self.cleaned_locations = self.asparagus_locations
 			self.cleaned_locations_robot_cs = self.asparagus_locations_robot_cs
 
+		'''
 		# Check if picked asparagus are out of range
 		if self.first_asparagus_picked:
 			#self.picked_asparagus = np.reshape(self.picked_asparagus, (-1,4))
@@ -185,6 +208,7 @@ class motion_planning:
 					self.picked_asparagus = np.delete(self.picked_asparagus, delete_idx)
 				else:
 					self.picked_asparagus = np.array([[1000, 1000, 1000 ,0]])
+		'''
 
 
 	def robot_in_position(self, desired_angle, actual_angle, angle_error):
@@ -194,9 +218,12 @@ class motion_planning:
 		# Calculate error
 		e = desired_angle_deg[:3] - actual_angle[:3]
 
-		#print('Desired poz', desired_angle_deg)
-		#print('Actual poz', actual_angle)
-		#print(e)
+		if self.print_step == 10:
+			self.print_step = 0
+			print('Desired poz', desired_angle_deg)
+			#print('Actual poz', actual_angle)
+			#print("error = ", e)
+		self.print_step = self.print_step + 1
 		
 		# Check if each joint reached desired angle
 		poz_reached = np.full((len(e)), False)
@@ -234,7 +261,7 @@ class motion_planning:
 		#print('Len picked = ', len(self.picked_asparagus))
 		#print('Len close = ', len(self.asparagus_too_close))
 		#print('Len cleaned_locations = ', self.num_of_asparagus)
-		print('step path = ', self.step_path)
+		#print('step path = ', self.step_path)
 
 		
 
@@ -253,7 +280,7 @@ class motion_planning:
 			self.gripper_poz = np.zeros(4)
 			self.picked_asparagus_flag_arr = np.full(self.num_of_asparagus, False)
 
-			print(self.num_of_asparagus)
+			#print(self.num_of_asparagus)
 
 			if self.num_of_asparagus > 0:
 				self.step_path = 0.5
@@ -274,7 +301,7 @@ class motion_planning:
 						min_idx =np.argmin(i)
 						self.picked_asparagus_flag_arr[min_idx] = True
 
-			print(self.picked_asparagus_flag_arr)
+			#print(self.picked_asparagus_flag_arr)
 
 			self.step_path = 1
 
@@ -292,7 +319,7 @@ class motion_planning:
 				self.picked_asparagus_flag_arr = temp
 
 			# Check asparagus height
-			print('Cleaned_location = ', self.cleaned_locations)
+			#print('Cleaned_location = ', self.cleaned_locations)
 			for idx, i in enumerate(self.cleaned_locations):
 				# 4th element in array represents if asparagus is ready for harvesting (is high enough)
 				# Check if asparagus are too close and if asparagus was already picked
@@ -392,9 +419,9 @@ class motion_planning:
 					self.dist_x_ok = False
 
 				# Check if all conditions are true
-				print('self.dist_to_asparagus_ok = ', self.dist_to_asparagus_ok)
-				print('self.dist_tracks_ok = ', self.dist_tracks_ok)
-				print('self.dist_x_ok = ', self.dist_x_ok)
+				#print('self.dist_to_asparagus_ok = ', self.dist_to_asparagus_ok)
+				#print('self.dist_tracks_ok = ', self.dist_tracks_ok)
+				#print('self.dist_x_ok = ', self.dist_x_ok)
 				#self.dist_to_asparagus_ok = True
 				if self.dist_to_asparagus_ok and self.dist_tracks_ok and self.dist_x_ok:
 					# go to next point
@@ -421,7 +448,7 @@ class motion_planning:
 				
 			else:
 				self.path = []
-			print('path = ', self.path)
+			#print('path = ', self.path)
 
 	
 		elif self.step_path == 5:
@@ -437,7 +464,7 @@ class motion_planning:
 
 			self.step_path = 6
 			
-			print('global path = ', self.path_global_cs)
+			#print('global path = ', self.path_global_cs)
 
 		elif self.step_path == 6:
 			self.new_path_request = False
@@ -451,6 +478,8 @@ class motion_planning:
 		#print('Path calculated = ', self.path_calculated)
 		#print('New path request = ', self.new_path_request)
 
+		#print("robot in poz = ", self.robot_in_poz)
+
 		
 		# Calculate desired angles in robot axis
 		angle_error = [1, 1, 1, 1, 1]			
@@ -461,6 +490,7 @@ class motion_planning:
 			# Check if path was already calculated, else go to home position
 			if self.path_calculated:
 				self.step_motion = 2
+				self.timeflag = time.time()
 			else:
 				self.set_poz = self.home_poz
 				self.step_motion = 1
@@ -468,12 +498,18 @@ class motion_planning:
 		elif self.step_motion == 1:
 			# Check if we reached home position
 			qd_radians = np.zeros(5)
-			temp = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
+			temp = self.next_point#self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
 			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
 			angle_error = [0.5, 0.5, 0.5, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 			if self.robot_in_poz:
-				print(self.robot_in_poz)
+				print(str(self.robot_in_poz) + " " + str(self.step_motion))
+				timediff = time.time() - self.timeflag 
+				print("Cas izvajanja: " + str(timediff))
+				self.timeflag = time.time()
+				print("step_path = ", self.step_path)
+				print("")
+
 				self.robot_in_poz = False
 				self.step_motion = 2
 
@@ -486,6 +522,13 @@ class motion_planning:
 
 				# Publish cmd
 				self.pub_cmdTrack.publish(self.cmdTracks)
+
+				print(str(self.robot_in_poz) + " " + str(self.step_motion))
+				timediff = time.time() - self.timeflag 
+				print("Cas izvajanja: " + str(timediff))
+				self.timeflag = time.time()
+				print("step_path = ", self.step_path)
+				print("")
 
 				self.step_motion = 3
 
@@ -502,12 +545,19 @@ class motion_planning:
 			self.set_poz = [x_robot_cs, y_robot_cs, self.path_global_cs[self.path_idx][2], self.path_global_cs[self.path_idx][3], self.gripper_open_poz]
 
 			qd_radians = np.zeros(5)
-			temp = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
+			temp = self.next_point #self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
 			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
-			angle_error = [3, 3, 3, 1, 1]
+			angle_error = [0.5, 0.5, 0.5, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:
+				print(str(self.robot_in_poz) + " " + str(self.step_motion))
+				timediff = time.time() - self.timeflag 
+				print("Cas izvajanja: " + str(timediff))
+				self.timeflag = time.time()
+				print("step_path = ", self.step_path)
+				print("")
+
 				print(self.robot_in_poz)
 				self.robot_in_poz = False
 				self.path_idx = self.path_idx + 1
@@ -519,6 +569,13 @@ class motion_planning:
 			if self.path_idx >= len(self.path_global_cs):
 				# Start time measurement
 				self.start_gripper_closing = time.time()
+
+				print(str(self.robot_in_poz) + " " + str(self.step_motion))
+				timediff = time.time() - self.timeflag 
+				print("Cas izvajanja: " + str(timediff))
+				self.timeflag = time.time()
+				print("step_path = ", self.step_path)
+				print("")
 
 				self.step_motion = 5
 			else:
@@ -538,12 +595,19 @@ class motion_planning:
 			self.set_poz = [x_robot_cs, y_robot_cs, self.path_global_cs[-1][2], self.path_global_cs[-1][3], self.gripper_close_poz]
 
 			qd_radians = np.zeros(5)
-			temp = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
+			temp = self.next_point #self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
 			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
 			
 			elapsed_time = time.time() - self.start_gripper_closing
 
 			if elapsed_time > self.gripper_time:
+				print(str(self.robot_in_poz) + " " + str(self.step_motion))
+				timediff = time.time() - self.timeflag 
+				print("Cas izvajanja: " + str(timediff))
+				self.timeflag = time.time()
+				print("step_path = ", self.step_path)
+				print("")
+
 				self.cmdTracks.stop_tracks  = False
 				self.cmdTracks.start_tracks = True
 
@@ -566,13 +630,19 @@ class motion_planning:
 			self.set_poz = [x_robot_cs, y_robot_cs, self.z_start/2, self.path_global_cs[-1][3], self.gripper_close_poz]
 
 			qd_radians = np.zeros(5)
-			temp = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
+			temp = self.next_point #self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
 			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
-			angle_error = [8, 8, 8, 1, 1]
+			angle_error = [0.5, 0.5, 0.5, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:
-				print(self.robot_in_poz)
+				print(str(self.robot_in_poz) + " " + str(self.step_motion))
+				timediff = time.time() - self.timeflag 
+				print("Cas izvajanja: " + str(timediff))
+				self.timeflag = time.time()
+				print("step_path = ", self.step_path)
+				print("")
+
 				self.robot_in_poz = False
 
 				# Save position of picked asparagus
@@ -602,13 +672,19 @@ class motion_planning:
 			self.set_poz = self.place_poz[self.storage_idx]
 			
 			qd_radians = np.zeros(5)
-			temp = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
+			temp = self.next_point #self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
 			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
-			angle_error = [5, 5, 5, 1, 1]
+			angle_error = [0.5, 0.5, 0.5, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:
-				print(self.robot_in_poz)
+				print(str(self.robot_in_poz) + " " + str(self.step_motion))
+				timediff = time.time() - self.timeflag 
+				print("Cas izvajanja: " + str(timediff))
+				self.timeflag = time.time()
+				print("step_path = ", self.step_path)
+				print("")
+
 				self.robot_in_poz = False
 
 				# Open gripper
@@ -623,6 +699,13 @@ class motion_planning:
 			elapsed_time = time.time() - self.start_gripper_opening
 
 			if elapsed_time > self.gripper_time:
+				print(str(self.robot_in_poz) + " " + str(self.step_motion))
+				timediff = time.time() - self.timeflag 
+				print("Cas izvajanja: " + str(timediff))
+				self.timeflag = time.time()
+				print("step_path = ", self.step_path)
+				print("")
+
 				self.step_motion = 9
 
 		elif self.step_motion == 9:

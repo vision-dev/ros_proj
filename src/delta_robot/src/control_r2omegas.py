@@ -42,7 +42,7 @@ class velocity_control:
 
 		rospy.init_node(self.nodeName, anonymous=False)
 
-		rospy.Subscriber(self.topicName_r_control, Floats, self.callback_readReference)
+		rospy.Subscriber(self.topicName_r_control, Floats, self.callback_readReference, queue_size=1)
 		rospy.Subscriber(self.topicName_delta_from_plc, JointStateRobot, self.callback_control)
 
 		self.stevec = 0
@@ -66,6 +66,7 @@ class velocity_control:
 	def callback_control(self, data):
 		# Check if we received new data from PLC
 		#print(f"timestamp {repr(data)}")
+		
 		if data.Timestamp != self.Timestamp_old:
 			self.newData_flag = True
 		
@@ -94,12 +95,14 @@ class velocity_control:
 			x_sin_test = 100*math.sin(time.time()*4)
 			#print(x_sin_test)
 
+			print('r_control = ', self.r_control)
+
 			qd_radians, _ = deltaInverseKin(self.r_control[0], self.r_control[1], self.r_control[2], self.r_control[3])
 			#print('qd_radians = ', qd_radians)
 			#qd_radians, _ = deltaInverseKin(x_sin_test, 0, -750, self.r_control[3])
 			# Transform to degrees
 			qd[:3] = 180/np.pi*qd_radians
-
+			print("desired poz = ", qd)
 			# test PD control
 			'''
 			self.stevec = self.stevec + 1			
@@ -116,14 +119,15 @@ class velocity_control:
 			'''
 			
 
-			self.testpub.publish(qd[0])
+			#self.testpub.publish(qd[0])
 
 			qd[3:] = self.r_control[3:]
 			#print('qd = ', qd)
 
 			# angular error - joint coordinates
 			e = qd - self.qq
-			print(e)
+			
+			
 			#de = (e - self.e_old) / self.dt
 			#de = self.dqd - self.dq
 			de = -self.dq
