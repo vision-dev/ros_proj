@@ -44,7 +44,9 @@ class velocity_control:
 
 		rospy.Subscriber(self.topicName_r_control, Floats, self.callback_readReference, queue_size=1)
 		rospy.Subscriber(self.topicName_delta_from_plc, JointStateRobot, self.callback_control)
-
+		rospy.Subscriber("/robot/qd", Floats, self.callback_read_qd, queue_size=1)
+		
+		self.qd_available = False
 		self.stevec = 0
 
 	def pretty_np(self, preprintString, numpyArray, nDecimals=4):
@@ -60,6 +62,19 @@ class velocity_control:
 
 		self.start_time = time.time()
 		#print(self.r_control)
+
+		self.qd_available = False
+
+		return
+
+	def callback_read_qd(self, data):
+		self.qd = data.data
+
+		self.start_time = time.time()
+
+		#print(self.qd)
+
+		self.qd_available = True
 
 		return
 
@@ -95,14 +110,17 @@ class velocity_control:
 			x_sin_test = 100*math.sin(time.time()*4)
 			#print(x_sin_test)
 
-			print('r_control = ', self.r_control)
+			#print('r_control = ', self.r_control)
 
-			qd_radians, _ = deltaInverseKin(self.r_control[0], self.r_control[1], self.r_control[2], self.r_control[3])
-			#print('qd_radians = ', qd_radians)
-			#qd_radians, _ = deltaInverseKin(x_sin_test, 0, -750, self.r_control[3])
-			# Transform to degrees
-			qd[:3] = 180/np.pi*qd_radians
-			print("desired poz = ", qd)
+			if self.qd_available == False:
+				qd_radians, _ = deltaInverseKin(self.r_control[0], self.r_control[1], self.r_control[2], self.r_control[3])
+				#print('qd_radians = ', qd_radians)
+				#qd_radians, _ = deltaInverseKin(x_sin_test, 0, -750, self.r_control[3])
+				# Transform to degrees
+				qd[:3] = 180/np.pi*qd_radians
+				qd[3:] = self.r_control[3:]
+			else:
+				qd = self.qd
 			# test PD control
 			'''
 			self.stevec = self.stevec + 1			
@@ -121,8 +139,9 @@ class velocity_control:
 
 			#self.testpub.publish(qd[0])
 
-			qd[3:] = self.r_control[3:]
+			
 			#print('qd = ', qd)
+			#print("desired poz = ", qd)
 
 			# angular error - joint coordinates
 			e = qd - self.qq
@@ -171,12 +190,12 @@ class velocity_control:
 			RobotCmd.dq.j2 = dq[2]
 			RobotCmd.dq.j3 = dq[3]
 			#print(self.r_control[4])
-			if self.r_control[4] == 0.0:
+			if qd[4] == 0.0:
 				RobotCmd.dq.j4 = 0
 				# Open gripper
 				RobotCmd.open_gripper  = 0
 				RobotCmd.close_gripper = 1
-			elif self.r_control[4] == -120.0:
+			elif qd == -120.0:
 				RobotCmd.dq.j4 = 0
 				# Open gripper
 				RobotCmd.open_gripper  = 1
@@ -185,6 +204,8 @@ class velocity_control:
 				RobotCmd.dq.j4 = dq[4]
 				RobotCmd.open_gripper  = 0
 				RobotCmd.close_gripper = 0
+
+			#print(RobotCmd)
 
 			#print('Open gripper = ', RobotCmd.open_gripper)
 			#print('Close gripper = ', RobotCmd.close_gripper)
@@ -225,7 +246,7 @@ if __name__ == "__main__":
 	Kd_DC = 0.05
 	Kd = [Kd_delta, Kd_delta, Kd_delta, Kd_DC, Kd_DC]
 	#rospy.set_param('/robot_Kd', [0.005,0.005,0.005,0.4,0.4])
-	maxOmega = [100,100,100,50,500]
+	maxOmega = [100,100,100,250,250]
 	displayResults = False
 
 	control = velocity_control(Kp, Kd, maxOmega, displayResults)

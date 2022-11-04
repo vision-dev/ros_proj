@@ -17,7 +17,7 @@ from numpy.core.numeric import isscalar
 class minJerkInterpolator():
 
 
-	def __init__(self, maxSpeed, dT=0.1, printAll=False):
+	def __init__(self, maxSpeed, dT=0.001, printAll=False):
 		'''
 			maxSpeed can be scalar (if it's equal for all dimensions), or numpy.ndarray, if every dimension has different maxSpeed
 
@@ -60,7 +60,7 @@ class minJerkInterpolator():
 		for point in self.pointsFifo:
 			print(point)
 
-	def run(self):
+	def run(self, robot_in_poz=False):
 		'''	
 			call to get interpolation point (and it takes care of interpolation 
 					and of selecting the next point, and removing old points)
@@ -71,6 +71,8 @@ class minJerkInterpolator():
 								2 two or more interpolation points, interpolation in progress
 				interpolatedPoint - self exp.
 		'''
+		self.robot_in_poz = robot_in_poz
+
 		if len(self.pointsFifo) == 0:
 			return 0, np.array([0])
 		elif len(self.pointsFifo) == 1:
@@ -83,8 +85,9 @@ class minJerkInterpolator():
 									 self.pointsFifo[1]['point'], 
 									 t=timeSinceMoveStart,
 									 maxVelocity=self.pointsFifo[1]['maxSpeed'])
-
-			if goalReached:
+			
+			#print("Goal reached = ", goalReached)
+			if goalReached or self.robot_in_poz:
 				continueToNext = False
 
 				if self.pointsFifo[1]['waitAfter'] > 0:
@@ -122,6 +125,9 @@ class minJerkInterpolator():
 		starting = np.array(starting)
 		final = np.array(final)
 
+		#print("starting = ", starting)
+		#print("final = ", final)
+
 		if onlyOneDimension:
 			starting.shape = (1)
 			final.shape = (1)
@@ -129,9 +135,12 @@ class minJerkInterpolator():
 		distances = np.abs(final - starting)
 		if maxVelocity.shape[0] <= 1 and distances.shape[0] > 1:
 			maxVelocity = maxVelocity*np.ones(distances.shape)
+
+		#print(distances)	
 		
 		if np.max(distances) < 1e-5:
 			goalReached = True
+			print("goal_reached = ", goalReached)
 			return goalReached, starting
 		
 		times = 1.0*distances/maxVelocity
@@ -146,6 +155,7 @@ class minJerkInterpolator():
 
 
 		goalReached, point, pointDerivative = self.generateMinJerk(0, abs(final[idx]-starting[idx]), self.dT, maxVelocity[idx], t)
+		#goalReached, point, pointDerivative = self.generateMinJerk(starting[idx], final[idx], self.dT, maxVelocity[idx], t)
 		refPoint = point/distances[idx]
 
 		interpolated = starting + (final-starting)*refPoint
@@ -172,11 +182,12 @@ class minJerkInterpolator():
 			returns:
 			goalReached (false if t=None, if t is passed, goalReached = True, when t> move_time)
 		'''
-		if abs(setpoint - current) < 1e-5:
+		#print("setpoint = ", setpoint)
+		if abs(setpoint - current) < 1: #1e-5:
 			goalReached = True
 			return goalReached, current, 0
 		
-		move_time = 1.87 * abs(setpoint - current) / maxVelocity
+		move_time = 1.1 * abs(setpoint - current) / maxVelocity
 		goalReached = False
 
 		if t is not None:

@@ -13,6 +13,7 @@ from beckhoff_msgs.msg import CmdTracks
 
 from supportingFunctions.inverseKinematics_Phi import deltaInverseKin
 from supportingFunctions.minJerkInterpolator import minJerkInterpolator
+from supportingFunctions.minJerkContinuousInterpolation import minJerkContinuousInterpolation
 
 class motion_planning:
 	def __init__(self, xy_limits, z_start=0.15):
@@ -49,7 +50,7 @@ class motion_planning:
 		self.set_poz = np.copy(self.home_poz)
 		self.step_motion = 0
 		# Time gripper needs to close
-		self.gripper_time = 3
+		self.gripper_time = 1
 		# Set place position for asparagus
 		self.place_poz = [[0, 0.2, 0.1, 0, self.gripper_close_poz], [0, -0.2, 0.1, 0, self.gripper_close_poz]]
 		self.new_path_request = True
@@ -66,20 +67,26 @@ class motion_planning:
 		# initialize Interpolator:
 		self.maxVel = 300
 		self.rotVel = 50
-		self.maxSpeed = np.array([self.maxVel*10, self.maxVel*10, self.maxVel*10, self.rotVel*5, self.rotVel*5])
+		self.maxSpeed = np.array([self.maxVel, self.maxVel, self.maxVel, self.rotVel*5, self.rotVel*5])
 		self.interpolator = minJerkInterpolator(maxSpeed=self.maxSpeed, dT=dT_ms*0.001, printAll=False)
+		maxJointSpeed = [100, 100, 100, 250, 250]
+		self.continuous_interpolator = minJerkContinuousInterpolation(maxSpeed=maxJointSpeed, dT=dT_ms*0.001, printAll=False)
 
 		self.robot_in_poz = False
+		self.robot_in_poz_inter = False
 		
 		# Tracks cmd
 		self.cmdTracks = CmdTracks()
 
 		self.pub = rospy.Publisher('/r_control', numpy_msg(Floats),queue_size=1)
+		self.pub_cmd_qd = rospy.Publisher('/robot/qd', numpy_msg(Floats),queue_size=1)
 		self.pub_cmdTrack = rospy.Publisher('/tracks/cmd', CmdTracks, queue_size=1)
 
 		self.timeflag = 0
 		self.print_step = 0
 		self.pub_idx = 0
+
+		self.first_flag = False
 
 	
 	def callback_track_pose(self, data):
@@ -90,31 +97,51 @@ class motion_planning:
 
 		#qd_radians = np.zeros(5)
 		self.next_point = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
-
+		if self.first_flag == False:
+			self.next_point_old = self.next_point
+			self.next_point_old[2] = 0
+			self.distance = self.next_point_old
+			for idx in range(len(self.distance)):
+				self.distance[idx] = 0
+			self.first_flag = True
+		
 		qd_radians, _ = deltaInverseKin(self.next_point[0], self.next_point[1], self.next_point[2], self.next_point[3])
 		desired_angle_deg = 180 / np.pi *(qd_radians)
 		
-		print("self.next_point  = ", self.next_point)
-		print("qd  = ", desired_angle_deg)
+		#print("self.next_point  = ", self.next_point)
+		#print("qd  = ", desired_angle_deg)
 
-		self.interpolator.addPoint(self.next_point)     
+		
+		if np.any(self.next_point_old != self.next_point):
+			self.distance = np.abs(self.next_point - self.next_point_old)
+			
+			if np.max(self.distance) > 5:
+				self.interpolator.addPoint(self.next_point)
 
-		status, r_control = self.interpolator.run()
+			self.next_point_old = self.next_point 
+
+			#self.interpolator.printPoints() 
+
+		status, r_control = self.interpolator.run(self.robot_in_poz_inter)
+		self.robot_in_poz_inter = False
 		#status = 0
 		if status > 0 and self.pub_idx == 1:
 
 			self.pub_idx = 0
 			r_control = r_control.astype(dtype=np.float32)
-			print("r_control = ", r_control)
+			#print("r_control = ", r_control)
 
 			qd_radians, _ = deltaInverseKin(r_control[0], r_control[1], r_control[2], r_control[3])
 			desired_angle_deg = 180 / np.pi *(qd_radians)
-			print("qd 2  = ", desired_angle_deg)
+			#print("qd 2  = ", desired_angle_deg)
 
 			self.next_point = self.next_point.astype(dtype=np.float32)
 			
-			self.pub.publish(self.next_point)
-		
+			#if np.max(self.distance) > 5:
+				#self.pub.publish(r_control)
+			#else:
+				#self.pub.publish(self.next_point)
+
 		self.pub_idx = self.pub_idx + 1
 
 		if self.count_time == 0:
@@ -130,6 +157,38 @@ class motion_planning:
 	def callback_robot_angles(self, data):
 		self.qq = [data.qq.j0, data.qq.j1, data.qq.j2, data.qq.j3, data.qq.j4]
 		self.qq = np.asarray(self.qq, dtype=np.float32)
+
+		# test interpolation
+		if self.first_flag:
+
+			t = time.time()
+			current_poz = self.qq[:3]
+			qd_radians, _ = deltaInverseKin(self.next_point[0], self.next_point[1], self.next_point[2], self.next_point[3])
+			desired_angle_deg = 180 / np.pi *(qd_radians)
+			ref_position = desired_angle_deg[:3]
+
+			#print("ref_position = ", ref_position)
+			#print("current_poz = ", current_poz)
+
+			tf = self.continuous_interpolator.dynamic_final_time(t, ref_position, current_poz)
+			#print("tf = ", tf)
+			xd = self.continuous_interpolator.minJerkInterpolation(t, tf, current_poz, ref_position)
+
+			#print("x = ", current_poz)
+			#print("xd = ", xd)
+
+			# Publish desired angles to PD regulator
+			xd_send = np.zeros(5)
+			xd_send[:3] = xd
+			xd_send[3] = self.next_point[3]
+			xd_send[4] = self.next_point[4]
+
+			xd_send = xd_send.astype(dtype=np.float32)
+
+			self.pub_cmd_qd.publish(xd_send)
+
+			#print("xd_send = ", xd_send)
+
 
 	def callback_aspragus_locations(self, data):
 		self.asparagus_locations = data.data
@@ -220,7 +279,7 @@ class motion_planning:
 
 		if self.print_step == 10:
 			self.print_step = 0
-			print('Desired poz', desired_angle_deg)
+			#print('Desired poz', desired_angle_deg)
 			#print('Actual poz', actual_angle)
 			#print("error = ", e)
 		self.print_step = self.print_step + 1
@@ -309,12 +368,18 @@ class motion_planning:
 			if len(self.cleaned_locations) != len(self.asparagus_too_close):
 				temp = np.full(self.num_of_asparagus, False)
 				size_of_old = len(self.asparagus_too_close)
-				temp[:size_of_old] = self.asparagus_too_close
+				print("size_of_old = ", size_of_old)
+				print("self.num_of_asparagus = ", self.num_of_asparagus)
+				if size_of_old < self.num_of_asparagus:
+					temp[:size_of_old] = self.asparagus_too_close
+				else:
+					temp[:self.num_of_asparagus] = self.asparagus_too_close
 				self.asparagus_too_close = temp
 
 			if len(self.cleaned_locations) != len(self.picked_asparagus_flag_arr):
 				temp = np.full(self.num_of_asparagus, False)
 				size_of_old = len(self.picked_asparagus_flag_arr)
+				
 				temp[:size_of_old] = self.picked_asparagus_flag_arr
 				self.picked_asparagus_flag_arr = temp
 
@@ -511,6 +576,7 @@ class motion_planning:
 				print("")
 
 				self.robot_in_poz = False
+				self.robot_in_poz_inter = True
 				self.step_motion = 2
 
 		elif self.step_motion == 2:
@@ -521,7 +587,7 @@ class motion_planning:
 				self.cmdTracks.start_tracks = False
 
 				# Publish cmd
-				self.pub_cmdTrack.publish(self.cmdTracks)
+				#self.pub_cmdTrack.publish(self.cmdTracks)
 
 				print(str(self.robot_in_poz) + " " + str(self.step_motion))
 				timediff = time.time() - self.timeflag 
@@ -547,7 +613,7 @@ class motion_planning:
 			qd_radians = np.zeros(5)
 			temp = self.next_point #self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
 			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
-			angle_error = [0.5, 0.5, 0.5, 1, 1]
+			angle_error = [2, 2, 2, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:
@@ -560,6 +626,9 @@ class motion_planning:
 
 				print(self.robot_in_poz)
 				self.robot_in_poz = False
+
+				self.robot_in_poz_inter = True
+
 				self.path_idx = self.path_idx + 1
 
 				self.step_motion = 4
@@ -612,7 +681,7 @@ class motion_planning:
 				self.cmdTracks.start_tracks = True
 
 				# Publish cmd
-				self.pub_cmdTrack.publish(self.cmdTracks)
+				#self.pub_cmdTrack.publish(self.cmdTracks)
 
 				self.step_motion = 6
 		
@@ -632,7 +701,7 @@ class motion_planning:
 			qd_radians = np.zeros(5)
 			temp = self.next_point #self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
 			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
-			angle_error = [0.5, 0.5, 0.5, 1, 1]
+			angle_error = [2, 2, 2, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:
@@ -644,6 +713,8 @@ class motion_planning:
 				print("")
 
 				self.robot_in_poz = False
+
+				self.robot_in_poz_inter = True
 
 				# Save position of picked asparagus
 				
@@ -674,7 +745,7 @@ class motion_planning:
 			qd_radians = np.zeros(5)
 			temp = self.next_point #self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
 			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
-			angle_error = [0.5, 0.5, 0.5, 1, 1]
+			angle_error = [1, 1, 1, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:
@@ -686,6 +757,8 @@ class motion_planning:
 				print("")
 
 				self.robot_in_poz = False
+
+				self.robot_in_poz_inter = True
 
 				# Open gripper
 				self.set_poz[4] = self.gripper_open_poz

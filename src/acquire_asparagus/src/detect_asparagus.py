@@ -86,7 +86,7 @@ class detect_asparagus:
 			# Size of square for decimation
 			dx = dy = 0.03
 			# Minimal number of points in square
-			min_points = 27
+			min_points = 21
 			# Plot 2D histogram
 			plot_results = False
 			# Return sqares in which there are more than min_points
@@ -427,6 +427,7 @@ class detect_asparagus:
 			filtered_points = self.filter_pick_points(0.03)
 
 			flatten_aspargus = np.asarray(filtered_points, dtype=np.float32)
+			print("pick_points = ", flatten_aspargus)
 			flatten_aspargus = flatten_aspargus.flatten()
 
 			#print(self.aspargus)
