@@ -82,7 +82,7 @@ Postopek pobiranja:
 Zagon programov za pobriranje špargljev:
 
 1) roslaunch sick_scan sick_lms_1xx.launch hostname:=192.168.1.100
-2) rosrun transformations sensor_to_robot.py laser 0.55 0.04 0.5 0 2.36 0
+2) rosrun transformations sensor_to_robot.py laser 0.57 0.04 0.5 0 2.36 0
 3) rosrun transformations robot_to_global.py
 4) rosrun beckhoff_comm plc_pc_comm
 5) rosrun joy joy_node

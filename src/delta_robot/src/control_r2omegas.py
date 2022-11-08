@@ -121,6 +121,8 @@ class velocity_control:
 				qd[3:] = self.r_control[3:]
 			else:
 				qd = self.qd
+
+			#print("qd = ", qd)
 			# test PD control
 			'''
 			self.stevec = self.stevec + 1			
@@ -160,6 +162,9 @@ class velocity_control:
 			
 			dq = np.zeros((5), dtype=np.float32)
 			dq = self.Kp*e + self.Kd * de
+
+			#if qd[4] == 0 or qd[4] == -120:
+			#	dq[4] = 0
 			
 			# limit error for gripper
 			#if e[4] < 1:
@@ -189,13 +194,14 @@ class velocity_control:
 			RobotCmd.dq.j1 = dq[1]
 			RobotCmd.dq.j2 = dq[2]
 			RobotCmd.dq.j3 = dq[3]
+			#RobotCmd.dq.j4 = dq[4]
 			#print(self.r_control[4])
 			if qd[4] == 0.0:
 				RobotCmd.dq.j4 = 0
 				# Open gripper
 				RobotCmd.open_gripper  = 0
 				RobotCmd.close_gripper = 1
-			elif qd == -120.0:
+			elif qd[4] == -120.0:
 				RobotCmd.dq.j4 = 0
 				# Open gripper
 				RobotCmd.open_gripper  = 1
@@ -240,13 +246,13 @@ if __name__ == "__main__":
 	
 	
 	Kp_delta = 5
-	Kp = [Kp_delta,Kp_delta,Kp_delta, 5, 1]
+	Kp = [Kp_delta,Kp_delta,Kp_delta, 2.5, 0.5]
 	#rospy.set_param('/robot_Kp', [5,5,5,2,3])
 	Kd_delta = 0.05
 	Kd_DC = 0.05
-	Kd = [Kd_delta, Kd_delta, Kd_delta, Kd_DC, Kd_DC]
+	Kd = [Kd_delta, Kd_delta, Kd_delta, 0, 0]
 	#rospy.set_param('/robot_Kd', [0.005,0.005,0.005,0.4,0.4])
-	maxOmega = [100,100,100,250,250]
+	maxOmega = [150,150,150,250,250]
 	displayResults = False
 
 	control = velocity_control(Kp, Kd, maxOmega, displayResults)

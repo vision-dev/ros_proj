@@ -52,7 +52,7 @@ class motion_planning:
 		# Time gripper needs to close
 		self.gripper_time = 1
 		# Set place position for asparagus
-		self.place_poz = [[0, 0.2, 0.1, 0, self.gripper_close_poz], [0, -0.2, 0.1, 0, self.gripper_close_poz]]
+		self.place_poz = [[-0.1, 0.2, 0.13, 180, self.gripper_close_poz], [-0.1, -0.2, 0.13, 180, self.gripper_close_poz]]
 		self.new_path_request = True
 		self.z_offset = -900
 
@@ -69,7 +69,7 @@ class motion_planning:
 		self.rotVel = 50
 		self.maxSpeed = np.array([self.maxVel, self.maxVel, self.maxVel, self.rotVel*5, self.rotVel*5])
 		self.interpolator = minJerkInterpolator(maxSpeed=self.maxSpeed, dT=dT_ms*0.001, printAll=False)
-		maxJointSpeed = [100, 100, 100, 250, 250]
+		maxJointSpeed = [150, 150, 150, 250, 250]
 		self.continuous_interpolator = minJerkContinuousInterpolation(maxSpeed=maxJointSpeed, dT=dT_ms*0.001, printAll=False)
 
 		self.robot_in_poz = False
@@ -784,6 +784,8 @@ class motion_planning:
 		elif self.step_motion == 9:
 			# Check if next path is available, else go to home position
 			self.step_motion = 0
+
+	#def check_asparagus_position
 
 
 if __name__ == "__main__":

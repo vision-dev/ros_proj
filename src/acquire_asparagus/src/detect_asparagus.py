@@ -14,6 +14,7 @@ from pickle import TRUE
 import rospy
 from sensor_msgs.msg import PointCloud
 from geometry_msgs.msg import Pose2D
+from geometry_msgs.msg import TwistStamped
 import math
 import tf2_ros
 import tf
@@ -51,6 +52,9 @@ class detect_asparagus:
 		rospy.Subscriber(topic, PointCloud, self.callback_pointcloud, queue_size=1)
 		# Get current pose of the track robot (calculation is not real time so we need location of the platform when data was acquired)
 		rospy.Subscriber("/tracks/pose", Pose2D, self.callback_track_pose)
+		# Read actual linear and angular velocity of tracks
+		rospy.Subscriber("/tracks/twist_state", TwistStamped, self.callback_twist)
+
 		self.pub = rospy.Publisher("/aspragus_cloud", PointCloud, queue_size=1)
 		self.asparagus_location_pub = rospy.Publisher("/aspragus_locations", numpy_msg(Floats), queue_size=1)
 
@@ -65,6 +69,10 @@ class detect_asparagus:
 
 		self.first_pick_point = True
 
+	def callback_twist(self,data):
+		self.twist_data = data
+		self.track_linear_vel = self.twist_data.twist.linear.x
+		#print(self.track_linear_vel)
 
 	def callback_track_pose(self, data):
 		self.track_pose = data
@@ -84,9 +92,11 @@ class detect_asparagus:
 		# Check if there are any points above ground
 		if len(self.asparagus_points) > 0:
 			# Size of square for decimation
-			dx = dy = 0.03
-			# Minimal number of points in square
-			min_points = 21
+			dx = dy = 0.02
+			# Minimal number of points in square to detect as asparagus
+			min_points = 20
+			#print("hitrost = ", self.track_linear_vel)
+			#print("stevilo tock sparglev = ", len(self.asparagus_points))
 			# Plot 2D histogram
 			plot_results = False
 			# Return sqares in which there are more than min_points
@@ -421,7 +431,7 @@ class detect_asparagus:
 
 			#transformed_cloud = self.listener.transformPointCloud('robot',robot_points)
 
-			#print(transformed_cloud.points)
+			print("Raw points = ", robot_points)
 
 			# Filter duplicated points 
 			filtered_points = self.filter_pick_points(0.03)
@@ -467,11 +477,21 @@ class detect_asparagus:
 
 				#print('Dist2 = ', pick_points_0)
 
-
-				
-
 		return pick_points_0
 
+	def calculate_num_of_min_points(self, track_lin_vel):
+		'''
+		Dynamically change number of minimal number in point cloud for asparagus to be detected to be detected. 
+		Minimal number of points is in connection with tracks linear velocity.
+		'''
+		# Transform m/s to mm/s
+		track_lin_vel = abs(track_lin_vel) * 1000
+
+		k = 0.2
+
+		min_num_of_points = k * track_lin_vel + 10
+
+		return int(min_num_of_points)
 
 
 

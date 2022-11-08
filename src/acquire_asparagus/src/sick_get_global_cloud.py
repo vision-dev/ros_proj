@@ -72,7 +72,7 @@ class get_3D_sensor_img:
 		self.new_point_cloud.header.frame_id = 'global'
 
 		# Save data to array each time track robot move for more than 1 mm
-		if abs(route_x) > 0.001: #or abs(route_y) > 0.001:
+		if abs(route_x) > 0.001 or abs(route_y) > 0.001:
 			self.num_of_points_arr[self.arr_idx] = len(self.world_point_cloud.points)
 
 			self.arr_idx = self.arr_idx + 1
