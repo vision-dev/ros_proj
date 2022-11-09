@@ -13,6 +13,7 @@ import numpy as np
 import time
 import math
 from std_msgs.msg import Float32
+from std_msgs.msg import Bool
 
 from supportingFunctions.inverseKinematics_Phi import deltaInverseKin
 
@@ -45,6 +46,8 @@ class velocity_control:
 		rospy.Subscriber(self.topicName_r_control, Floats, self.callback_readReference, queue_size=1)
 		rospy.Subscriber(self.topicName_delta_from_plc, JointStateRobot, self.callback_control)
 		rospy.Subscriber("/robot/qd", Floats, self.callback_read_qd, queue_size=1)
+		rospy.Subscriber("/robot/close_gripper", Bool, self.callback_closeGripper, queue_size=1)
+		self.close_gripper = False
 		
 		self.qd_available = False
 		self.stevec = 0
@@ -54,6 +57,11 @@ class velocity_control:
 		for number in numpyArray:
 			displayPrint += '	{num:.0{prec}f}'.format(num=number, prec=nDecimals)
 		return displayPrint
+
+	def callback_closeGripper(self, data):
+		self.close_gripper = data.data
+
+		#print("Close gripper = ", self.close_gripper)
 
 	def callback_readReference(self, data):
 		self.r_control = data.data
@@ -163,8 +171,8 @@ class velocity_control:
 			dq = np.zeros((5), dtype=np.float32)
 			dq = self.Kp*e + self.Kd * de
 
-			#if qd[4] == 0 or qd[4] == -120:
-			#	dq[4] = 0
+			if qd[4] == 0 or qd[4] == -120:
+				dq[4] = 0
 			
 			# limit error for gripper
 			#if e[4] < 1:
@@ -194,14 +202,14 @@ class velocity_control:
 			RobotCmd.dq.j1 = dq[1]
 			RobotCmd.dq.j2 = dq[2]
 			RobotCmd.dq.j3 = dq[3]
-			#RobotCmd.dq.j4 = dq[4]
+			RobotCmd.dq.j4 = 0
 			#print(self.r_control[4])
-			if qd[4] == 0.0:
+			if self.close_gripper == True:
 				RobotCmd.dq.j4 = 0
 				# Open gripper
 				RobotCmd.open_gripper  = 0
 				RobotCmd.close_gripper = 1
-			elif qd[4] == -120.0:
+			elif self.close_gripper == False:
 				RobotCmd.dq.j4 = 0
 				# Open gripper
 				RobotCmd.open_gripper  = 1
@@ -252,7 +260,7 @@ if __name__ == "__main__":
 	Kd_DC = 0.05
 	Kd = [Kd_delta, Kd_delta, Kd_delta, 0, 0]
 	#rospy.set_param('/robot_Kd', [0.005,0.005,0.005,0.4,0.4])
-	maxOmega = [150,150,150,250,250]
+	maxOmega = [190,190,190,250,250]
 	displayResults = False
 
 	control = velocity_control(Kp, Kd, maxOmega, displayResults)

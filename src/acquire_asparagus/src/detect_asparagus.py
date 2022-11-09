@@ -68,6 +68,7 @@ class detect_asparagus:
 		self.median_available = False
 
 		self.first_pick_point = True
+		self.count_new_point = 0
 
 	def callback_twist(self,data):
 		self.twist_data = data
@@ -94,7 +95,7 @@ class detect_asparagus:
 			# Size of square for decimation
 			dx = dy = 0.02
 			# Minimal number of points in square to detect as asparagus
-			min_points = 20
+			min_points = 23
 			#print("hitrost = ", self.track_linear_vel)
 			#print("stevilo tock sparglev = ", len(self.asparagus_points))
 			# Plot 2D histogram
@@ -344,6 +345,7 @@ class detect_asparagus:
 		if self.first_pick_point:
 			# This is the first pick point
 			self.aspargus = np.array([[x_median[0], y_median[0], z_pick_height, harvest_point_valid[0]]])
+			self.harvest_point_old = harvest_point_valid
 			self.first_pick_point = False
 		else:
 			for idx in range(num_of_pick_asparagus):
@@ -361,15 +363,23 @@ class detect_asparagus:
 						new_point_arr[idx2] = True
 					else: 
 						# fix point location
-						self.aspargus[idx2] = np.array([[x_median[idx], y_median[idx], z_pick_height, harvest_point_valid[idx]]])
+						
+						#if self.harvest_point_old[idx] == True:
+						#	harvest_point_valid[idx] = True
+						#self.aspargus[idx2] = np.array([[x_median[idx], y_median[idx], z_pick_height, harvest_point_valid[idx]]])
+						self.aspargus[idx2][0] = x_median[idx] 
+						self.aspargus[idx2][1] = y_median[idx]
 						new_point_arr[idx2] = False
+						#self.harvest_point_old = harvest_point_valid
 
 					dist_array[idx2] = dist
 
 				#print('new_point_arr = ', new_point_arr)
-				new_point = np.all(new_point_arr == True)
+				new_point = np.all(new_point_arr, axis=0)
 				#print('new_point = ', new_point)
-				#print('dist array = ', dist_array)
+				if new_point:
+					self.count_new_point = self.count_new_point + 1
+				print('self.count_new_point = ', self.count_new_point)
 
 				if new_point:
 					self.aspargus = np.append(self.aspargus,[[x_median[idx], y_median[idx], z_pick_height, harvest_point_valid[idx]]], axis = 0)
@@ -431,13 +441,13 @@ class detect_asparagus:
 
 			#transformed_cloud = self.listener.transformPointCloud('robot',robot_points)
 
-			print("Raw points = ", robot_points)
+			#print("Raw points = ", robot_points)
 
 			# Filter duplicated points 
 			filtered_points = self.filter_pick_points(0.03)
 
 			flatten_aspargus = np.asarray(filtered_points, dtype=np.float32)
-			print("pick_points = ", flatten_aspargus)
+			#print("pick_points = ", flatten_aspargus)
 			flatten_aspargus = flatten_aspargus.flatten()
 
 			#print(self.aspargus)

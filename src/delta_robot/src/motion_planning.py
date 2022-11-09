@@ -9,6 +9,7 @@ import numpy as np
 import math
 import time
 from beckhoff_msgs.msg import CmdTracks
+from std_msgs.msg import Bool
 
 
 from supportingFunctions.inverseKinematics_Phi import deltaInverseKin
@@ -48,13 +49,16 @@ class motion_planning:
 		self.gripper_close_poz = 0
 		self.home_poz = [-0.2, 0, self.z_start, 0, self.gripper_open_poz]
 		self.set_poz = np.copy(self.home_poz)
+		
 		self.step_motion = 0
 		# Time gripper needs to close
 		self.gripper_time = 1
 		# Set place position for asparagus
-		self.place_poz = [[-0.1, 0.2, 0.13, 180, self.gripper_close_poz], [-0.1, -0.2, 0.13, 180, self.gripper_close_poz]]
+		self.place_poz = [[-0.2, 0.2, 0.13, 0, self.gripper_close_poz], [-0.2, -0.2, 0.13, 0, self.gripper_close_poz]]
 		self.new_path_request = True
 		self.z_offset = -900
+
+		self.next_point = self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
 
 		self.count_time = 0
 		self.start_time = 0
@@ -69,7 +73,7 @@ class motion_planning:
 		self.rotVel = 50
 		self.maxSpeed = np.array([self.maxVel, self.maxVel, self.maxVel, self.rotVel*5, self.rotVel*5])
 		self.interpolator = minJerkInterpolator(maxSpeed=self.maxSpeed, dT=dT_ms*0.001, printAll=False)
-		maxJointSpeed = [150, 150, 150, 250, 250]
+		maxJointSpeed = [190, 190, 190, 250, 250]
 		self.continuous_interpolator = minJerkContinuousInterpolation(maxSpeed=maxJointSpeed, dT=dT_ms*0.001, printAll=False)
 
 		self.robot_in_poz = False
@@ -81,6 +85,7 @@ class motion_planning:
 		self.pub = rospy.Publisher('/r_control', numpy_msg(Floats),queue_size=1)
 		self.pub_cmd_qd = rospy.Publisher('/robot/qd', numpy_msg(Floats),queue_size=1)
 		self.pub_cmdTrack = rospy.Publisher('/tracks/cmd', CmdTracks, queue_size=1)
+		self.pub_closeGripper = rospy.Publisher('/robot/close_gripper', Bool, queue_size=1)
 
 		self.timeflag = 0
 		self.print_step = 0
@@ -88,8 +93,11 @@ class motion_planning:
 
 		self.first_flag = False
 
+		self.CloseGripper = False
+
 	
 	def callback_track_pose(self, data):
+		#print("ok")
 		self.track_pose = data
 
 		# Start robot motion
@@ -563,10 +571,13 @@ class motion_planning:
 		elif self.step_motion == 1:
 			# Check if we reached home position
 			qd_radians = np.zeros(5)
-			temp = self.next_point#self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
+			temp = self.next_point #self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
 			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
 			angle_error = [0.5, 0.5, 0.5, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
+
+			# Open gripper
+			self.CloseGripper = False
 			if self.robot_in_poz:
 				print(str(self.robot_in_poz) + " " + str(self.step_motion))
 				timediff = time.time() - self.timeflag 
@@ -636,6 +647,7 @@ class motion_planning:
 		elif self.step_motion == 4:
 			# Check if we are at the last point (pick point)
 			if self.path_idx >= len(self.path_global_cs):
+				self.CloseGripper = True
 				# Start time measurement
 				self.start_gripper_closing = time.time()
 
@@ -762,8 +774,10 @@ class motion_planning:
 
 				# Open gripper
 				self.set_poz[4] = self.gripper_open_poz
-
+				self.CloseGripper = False
 				self.start_gripper_opening = time.time()
+
+
 
 				self.step_motion = 8
 
@@ -784,6 +798,9 @@ class motion_planning:
 		elif self.step_motion == 9:
 			# Check if next path is available, else go to home position
 			self.step_motion = 0
+
+		# Publish gripper cmd
+		self.pub_closeGripper.publish(self.CloseGripper)
 
 	#def check_asparagus_position
 

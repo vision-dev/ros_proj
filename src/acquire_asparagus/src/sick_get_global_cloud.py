@@ -19,6 +19,7 @@ from tf.transformations import quaternion_from_euler
 import tf
 from tf2_ros import TransformBroadcaster
 import time
+from geometry_msgs.msg import TwistStamped
 
 class get_3D_sensor_img:
 	def __init__(self):
@@ -35,6 +36,11 @@ class get_3D_sensor_img:
 		self.save_start_poz = False
 		self.new_point_cloud = PointCloud()
 
+		self.save_increment = 0.001
+
+		# Read actual linear and angular velocity of tracks
+		rospy.Subscriber("/tracks/twist_state", TwistStamped, self.callback_twist)
+
 		self.listener = tf.TransformListener()
 
 		self.pc_pub = rospy.Publisher("/scanner_3D_img", PointCloud, queue_size=1)
@@ -46,6 +52,15 @@ class get_3D_sensor_img:
 		self.max_array_len = 100
 		self.num_of_points_arr = np.zeros(self.max_array_len)
 		self.arr_idx = 0
+
+		self.route = 0
+		self.counter = 0
+		self.dT = 0.001
+
+
+	def callback_twist(self,data):
+		self.twist_data = data
+		self.track_linear_vel = self.twist_data.twist.linear.x
 
 	def read_track_pose(self, data):
 		self.track_pose = data
@@ -61,18 +76,35 @@ class get_3D_sensor_img:
 		self.world_point_cloud = self.listener.transformPointCloud('global',self.current_point_cloud)
 
 		if self.save_poz == False:
+			
 			self.saved_track_pose = self.track_pose
 
 			self.save_poz = True
 
+		# Measure cycle time
+		if self.counter == 0:
+			self.start_time = time.time()
+			self.counter = 1
+		else:
+			self.dT = time.time() - self.start_time
+			self.counter = 0
+
+		if self.track_linear_vel > 0:
+			self.route = self.route + self.dT * self.track_linear_vel
+		#print(self.route)
+
 		route_x = self.track_pose.x - self.saved_track_pose.x
-		route_y = self.track_pose.y - self.saved_track_pose.y
+		#route_y = self.track_pose.y - self.saved_track_pose.y
 
 		self.new_point_cloud.header.stamp = rospy.Time.now()
 		self.new_point_cloud.header.frame_id = 'global'
 
+
+
 		# Save data to array each time track robot move for more than 1 mm
-		if abs(route_x) > 0.001 or abs(route_y) > 0.001:
+		if self.route > self.save_increment:
+			self.route = 0
+
 			self.num_of_points_arr[self.arr_idx] = len(self.world_point_cloud.points)
 
 			self.arr_idx = self.arr_idx + 1
