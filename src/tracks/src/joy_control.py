@@ -65,7 +65,7 @@ class joystick_control:
 		rospy.Subscriber('/tracks/cmd', CmdTracks, self.callback_cmd_tracks)
 
 		self.pub = rospy.Publisher(self.topicName, TwistStamped,queue_size=1)
-		self.pub_reset_odom = rospy.Publisher("/robot/reset_odom", Bool,queue_size=1)
+		self.pub_reset_odom = rospy.Publisher("/tracks/reset_odom", Bool,queue_size=1)
 
 	def callback_joy(self, data):
 		self.joy = data
@@ -154,6 +154,8 @@ class joystick_control:
 			self.reset_odom = True
 		else:
 			self.reset_odom = False
+
+		print(self.reset_odom)
 		
 		self.pub_reset_odom.publish(self.reset_odom)
 

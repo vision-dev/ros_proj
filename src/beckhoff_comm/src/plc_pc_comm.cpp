@@ -185,7 +185,7 @@ void callback_cat_to_plc(const geometry_msgs::TwistStamped& data){
 	tracks_to_plc = {now_time, float(data.twist.linear.x), float(data.twist.angular.z), reset_odom, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	//delta_to_plc = { 0, 0.0, 0, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
-	//std::cout <<" ADS write " << float(data.twist.linear.x) << '\n';
+	//std::cout <<" ADS write " << reset_odom << '\n';
     
 }
 

@@ -54,7 +54,7 @@ class motion_planning:
 		# Time gripper needs to close
 		self.gripper_time = 1
 		# Set place position for asparagus
-		self.place_poz = [[-0.2, 0.2, 0.13, 0, self.gripper_close_poz], [-0.2, -0.2, 0.13, 0, self.gripper_close_poz]]
+		self.place_poz = [[-0.15, 0.22, 0.15, 0, self.gripper_close_poz], [-0.15, -0.22, 0.15, 0, self.gripper_close_poz]]
 		self.new_path_request = True
 		self.z_offset = -900
 

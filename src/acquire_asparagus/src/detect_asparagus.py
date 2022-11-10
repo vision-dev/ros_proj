@@ -95,7 +95,7 @@ class detect_asparagus:
 			# Size of square for decimation
 			dx = dy = 0.02
 			# Minimal number of points in square to detect as asparagus
-			min_points = 23
+			min_points = 42
 			#print("hitrost = ", self.track_linear_vel)
 			#print("stevilo tock sparglev = ", len(self.asparagus_points))
 			# Plot 2D histogram
@@ -338,6 +338,9 @@ class detect_asparagus:
 		# Number of aspargus ready for picking
 		num_of_pick_asparagus = len(x_median)
 		#pick_points = np.zeros((num_of_pick_asparagus,3))
+
+		print("x_median = ", x_median)
+		print("y_median = ", y_median)
 		
 		
 		#self.aspargus = []
@@ -357,8 +360,14 @@ class detect_asparagus:
 					point1 = np.array([x_median[idx], y_median[idx], 0])
 					point2 = np.array([i[0], i[1], 0])
 					dist = np.linalg.norm(point1 - point2)
+					#print("num_of_pick_asparagus = ", num_of_pick_asparagus)
+					#print("len self.aspargus = ", len(self.aspargus))
+					#print("idx = ", idx)
+					print("point1 = ", point1)
+					print("point2 = ", point2)
+					print("dist = ", dist)
 
-					if dist > 0.03:
+					if dist > 0.05:
 						# new point potencial
 						new_point_arr[idx2] = True
 					else: 
@@ -370,20 +379,21 @@ class detect_asparagus:
 						self.aspargus[idx2][0] = x_median[idx] 
 						self.aspargus[idx2][1] = y_median[idx]
 						new_point_arr[idx2] = False
+						break
 						#self.harvest_point_old = harvest_point_valid
 
 					dist_array[idx2] = dist
 
-				#print('new_point_arr = ', new_point_arr)
-				new_point = np.all(new_point_arr, axis=0)
+				print('dist_array = ', dist_array)
+				new_point = np.all(new_point_arr)
 				#print('new_point = ', new_point)
 				if new_point:
 					self.count_new_point = self.count_new_point + 1
-				print('self.count_new_point = ', self.count_new_point)
+				#print('self.count_new_point = ', self.count_new_point)
 
 				if new_point:
 					self.aspargus = np.append(self.aspargus,[[x_median[idx], y_median[idx], z_pick_height, harvest_point_valid[idx]]], axis = 0)
-		#print('self.aspargus = ',self.aspargus)
+		print('len 2 self.aspargus = ',len(self.aspargus))
 		'''
 		for idx in range(num_of_pick_asparagus):
 			# Check if point was already saved
@@ -419,6 +429,8 @@ class detect_asparagus:
 				self.aspargus = np.append(self.aspargus,[[x_median[idx], y_median[idx], z_pick_height, harvest_point_valid[idx]]], axis = 0)
 		'''
 		
+		#
+
 		# Save points in PointCloud format so that we can visualize them in rviz
 		num_of_pick_asparagus = len(self.aspargus)
 		
