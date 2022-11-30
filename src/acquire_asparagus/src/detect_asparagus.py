@@ -95,7 +95,7 @@ class detect_asparagus:
 			# Size of square for decimation
 			dx = dy = 0.02
 			# Minimal number of points in square to detect as asparagus
-			min_points = 42
+			min_points = 30
 			#print("hitrost = ", self.track_linear_vel)
 			#print("stevilo tock sparglev = ", len(self.asparagus_points))
 			# Plot 2D histogram
@@ -106,11 +106,12 @@ class detect_asparagus:
 			# Check if any sqares are valid
 			if points_valid:
 				z_pick_height = 0.04
+				z_pick_height_0 = 0.1
 				# Minimal number ob points below z_pick_height
-				min_z_points = 5
+				min_z_points = 3
 
 				# Calculate mean value for each asparagus
-				x_median, y_median = self.median_asparagus_points(self.asparagus_points, limit_array, z_pick_height, min_z_points)
+				x_median, y_median = self.median_asparagus_points(self.asparagus_points, limit_array, z_pick_height_0, min_z_points)
 
 				#print("Find x,y time = ", time.time() - self.start_time)
 
@@ -339,8 +340,8 @@ class detect_asparagus:
 		num_of_pick_asparagus = len(x_median)
 		#pick_points = np.zeros((num_of_pick_asparagus,3))
 
-		print("x_median = ", x_median)
-		print("y_median = ", y_median)
+		#print("x_median = ", x_median)
+		#print("y_median = ", y_median)
 		
 		
 		#self.aspargus = []
@@ -363,9 +364,9 @@ class detect_asparagus:
 					#print("num_of_pick_asparagus = ", num_of_pick_asparagus)
 					#print("len self.aspargus = ", len(self.aspargus))
 					#print("idx = ", idx)
-					print("point1 = ", point1)
-					print("point2 = ", point2)
-					print("dist = ", dist)
+					#print("point1 = ", point1)
+					#print("point2 = ", point2)
+					#print("dist = ", dist)
 
 					if dist > 0.05:
 						# new point potencial
@@ -384,7 +385,7 @@ class detect_asparagus:
 
 					dist_array[idx2] = dist
 
-				print('dist_array = ', dist_array)
+				#print('dist_array = ', dist_array)
 				new_point = np.all(new_point_arr)
 				#print('new_point = ', new_point)
 				if new_point:
@@ -393,7 +394,7 @@ class detect_asparagus:
 
 				if new_point:
 					self.aspargus = np.append(self.aspargus,[[x_median[idx], y_median[idx], z_pick_height, harvest_point_valid[idx]]], axis = 0)
-		print('len 2 self.aspargus = ',len(self.aspargus))
+		#print('len 2 self.aspargus = ',len(self.aspargus))
 		'''
 		for idx in range(num_of_pick_asparagus):
 			# Check if point was already saved
@@ -459,7 +460,7 @@ class detect_asparagus:
 			filtered_points = self.filter_pick_points(0.03)
 
 			flatten_aspargus = np.asarray(filtered_points, dtype=np.float32)
-			#print("pick_points = ", flatten_aspargus)
+			print("pick_points = ", flatten_aspargus)
 			flatten_aspargus = flatten_aspargus.flatten()
 
 			#print(self.aspargus)

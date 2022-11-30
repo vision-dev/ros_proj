@@ -52,6 +52,12 @@ class velocity_control:
 		self.qd_available = False
 		self.stevec = 0
 
+		######## added by sslajpah ########
+		self.r_control = []
+		self.qd = []
+		self.start_time = time.time()
+		###################################
+		
 	def pretty_np(self, preprintString, numpyArray, nDecimals=4):
 		displayPrint = preprintString
 		for number in numpyArray:
@@ -69,10 +75,9 @@ class velocity_control:
 		#print('r_control = ', self.r_control)
 
 		self.start_time = time.time()
-		#print(self.r_control)
 
 		self.qd_available = False
-
+		
 		return
 
 	def callback_read_qd(self, data):
@@ -120,15 +125,30 @@ class velocity_control:
 
 			#print('r_control = ', self.r_control)
 
+			# if self.qd_available == False:
+			# 	qd_radians, _ = deltaInverseKin(self.r_control[0], self.r_control[1], self.r_control[2], self.r_control[3])
+			# 	#print('qd_radians = ', qd_radians)
+			# 	#qd_radians, _ = deltaInverseKin(x_sin_test, 0, -750, self.r_control[3])
+			# 	# Transform to degrees
+			# 	qd[:3] = 180/np.pi*qd_radians
+			# 	qd[3:] = self.r_control[3:]
+			# else:
+			# 	qd = self.qd
+
+
+			####### added by sslajpah, 24. 11. 2022  #######
 			if self.qd_available == False:
-				qd_radians, _ = deltaInverseKin(self.r_control[0], self.r_control[1], self.r_control[2], self.r_control[3])
-				#print('qd_radians = ', qd_radians)
-				#qd_radians, _ = deltaInverseKin(x_sin_test, 0, -750, self.r_control[3])
-				# Transform to degrees
-				qd[:3] = 180/np.pi*qd_radians
-				qd[3:] = self.r_control[3:]
+				if len(self.r_control)!=0:
+					qd_radians, _ = deltaInverseKin(self.r_control[0], self.r_control[1], self.r_control[2], self.r_control[3])
+					#print('qd_radians = ', qd_radians)
+					#qd_radians, _ = deltaInverseKin(x_sin_test, 0, -750, self.r_control[3])
+					# Transform to degrees
+					qd[:3] = 180/np.pi*qd_radians
+					qd[3:] = self.r_control[3:]
 			else:
 				qd = self.qd
+			#####################################
+	
 
 			#print("qd = ", qd)
 			# test PD control

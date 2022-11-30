@@ -342,7 +342,7 @@ class motion_planning:
 			self.ready_for_pick = False
 			self.grow_poz = np.zeros(3)
 			self.asparagus_too_close = np.full(self.num_of_asparagus, False)
-			# Angle a which we are trying to generate picking trajectory
+			# Angle at which we are trying to generate picking trajectory
 			self.try_angle = 0
 			self.gripper_poz = np.zeros(4)
 			self.picked_asparagus_flag_arr = np.full(self.num_of_asparagus, False)
@@ -373,23 +373,46 @@ class motion_planning:
 			self.step_path = 1
 
 		elif self.step_path == 1:
+			
+			
 			if len(self.cleaned_locations) != len(self.asparagus_too_close):
 				temp = np.full(self.num_of_asparagus, False)
 				size_of_old = len(self.asparagus_too_close)
+				if size_of_old >= self.num_of_asparagus:
+					#temp = np.full(len(self.asparagus_too_close), False)
+					temp[:self.num_of_asparagus] = self.asparagus_too_close[-self.num_of_asparagus:]
+					
+				else:
+					#temp = np.full(self.num_of_asparagus, False)
+					temp[:size_of_old] = self.asparagus_too_close
+					
+
+				
 				print("size_of_old = ", size_of_old)
 				print("self.num_of_asparagus = ", self.num_of_asparagus)
-				if size_of_old < self.num_of_asparagus:
-					temp[:size_of_old] = self.asparagus_too_close
-				else:
-					temp[:self.num_of_asparagus] = self.asparagus_too_close
+				
+				#if size_of_old < self.num_of_asparagus:
+				#	temp[:size_of_old] = self.asparagus_too_close
+				#else:
+				#	temp[:self.num_of_asparagus] = self.asparagus_too_close
 				self.asparagus_too_close = temp
-
+				
+			
 			if len(self.cleaned_locations) != len(self.picked_asparagus_flag_arr):
 				temp = np.full(self.num_of_asparagus, False)
+
 				size_of_old = len(self.picked_asparagus_flag_arr)
+				if size_of_old >= self.num_of_asparagus:
+					temp[:self.num_of_asparagus] = self.picked_asparagus_flag_arr[-self.num_of_asparagus:]
+				else:
+					#temp = np.full(self.num_of_asparagus, False)
+					temp[:size_of_old] = self.picked_asparagus_flag_arr
+					
 				
-				temp[:size_of_old] = self.picked_asparagus_flag_arr
+				
+				
 				self.picked_asparagus_flag_arr = temp
+			
 
 			# Check asparagus height
 			#print('Cleaned_location = ', self.cleaned_locations)
@@ -452,6 +475,7 @@ class motion_planning:
 			self.obsticle_on_path = False
 			self.gripper_dist_array = np.zeros(self.num_of_asparagus)
 
+			
 			current_pretarget_dist = np.linalg.norm(self.grow_poz_robot_cs - self.gripper_poz[:3])
 			while current_pretarget_dist <= pretarget_dist:
 				# Calculate distance between gripper and other asparagus and tracks
@@ -504,6 +528,7 @@ class motion_planning:
 				else:
 					self.obsticle_on_path = True
 					break
+				
 
 			if self.obsticle_on_path == False:
 				# Add points to path
@@ -624,7 +649,7 @@ class motion_planning:
 			qd_radians = np.zeros(5)
 			temp = self.next_point #self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
 			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
-			angle_error = [2, 2, 2, 1, 1]
+			angle_error = [3, 3, 3, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:
@@ -708,12 +733,12 @@ class motion_planning:
 			y_robot_cs = self.path_global_cs[-1][1] - y_trans
 			
 			# Send robot to path point
-			self.set_poz = [x_robot_cs, y_robot_cs, self.z_start/2, self.path_global_cs[-1][3], self.gripper_close_poz]
+			self.set_poz = [x_robot_cs, y_robot_cs, self.z_start, self.path_global_cs[-1][3], self.gripper_close_poz]
 
 			qd_radians = np.zeros(5)
 			temp = self.next_point #self.convert_point_to_robot_cs(self.set_poz, self.z_offset)
 			qd_radians[:3], _ = deltaInverseKin(temp[0], temp[1], temp[2], temp[3])
-			angle_error = [2, 2, 2, 1, 1]
+			angle_error = [3, 3, 3, 1, 1]
 			self.robot_in_poz = self.robot_in_position(qd_radians, self.qq, angle_error)
 
 			if self.robot_in_poz:

@@ -86,7 +86,8 @@ class joystick_control:
 		# Get pose 2D of the tracks
 		rospy.Subscriber("/tracks/pose", Pose2D, self.callback_tracks_pose)
 
-		self.pub          = rospy.Publisher(self.topicName, numpy_msg(Floats),queue_size=1)
+		#self.pub          = rospy.Publisher(self.topicName, numpy_msg(Floats),queue_size=1)
+		self.pub          = rospy.Publisher(self.topicName, Floats,queue_size=1)
 		self.pub_zero     = rospy.Publisher("/robot/zero", Bool,queue_size=1)
 		
 		
@@ -257,8 +258,14 @@ class joystick_control:
 		if status > 0:
 
 			r_control = r_control.astype(dtype=np.float32)
-			
-			self.pub.publish(r_control)
+
+			####### added by sslajpah #######
+			r_control_msg = Floats()
+			r_control_msg.data = [r_control[0],r_control[1],r_control[2],r_control[3]]
+			self.pub.publish(r_control_msg)
+			###################################
+
+			#self.pub.publish(r_control)
 
 			x = r_control[0]
 			y = r_control[1]   
@@ -275,7 +282,8 @@ class joystick_control:
 		# Save current time
 		self.start_time = time.time()
 		
-		self.pub = rospy.Publisher(self.topicName, numpy_msg(Floats),queue_size=1)
+		#self.pub = rospy.Publisher(self.topicName, numpy_msg(Floats),queue_size=1)
+		
 		#rate = rospy.Rate(5)
 		#rospy.spin()
 

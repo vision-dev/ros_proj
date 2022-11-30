@@ -103,6 +103,7 @@ class get_3D_sensor_img:
 
 		# Save data to array each time track robot move for more than 1 mm
 		if self.route > self.save_increment:
+			print("Platform linear velocity = ", str(self.track_linear_vel*100) + " cm/s")
 			self.route = 0
 
 			self.num_of_points_arr[self.arr_idx] = len(self.world_point_cloud.points)

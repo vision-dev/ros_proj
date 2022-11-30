@@ -140,7 +140,7 @@ class minJerkInterpolator():
 		
 		if np.max(distances) < 1e-5:
 			goalReached = True
-			print("goal_reached = ", goalReached)
+			#print("goal_reached = ", goalReached)
 			return goalReached, starting
 		
 		times = 1.0*distances/maxVelocity

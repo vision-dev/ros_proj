@@ -149,13 +149,15 @@ class joystick_control:
 		self.pub = rospy.Publisher(self.topicName, TwistStamped,queue_size=1)
 
 		# Reset odometry -> right push button
+		reset_odom_old = self.reset_odom
 		if self.joy.buttons[10]:
 			# Send homing command to PLC for gripper homing
 			self.reset_odom = True
 		else:
 			self.reset_odom = False
 
-		print(self.reset_odom)
+		if	~reset_odom_old & self.reset_odom:
+			print('Odometry reset.')
 		
 		self.pub_reset_odom.publish(self.reset_odom)
 

@@ -16,7 +16,7 @@
         <!--
         <include file="$(find sick_scan)/launch/sick_lms_1xx.launch">
             <arg name="hostname" value="192.168.1.100"/>
-        </include>-->
+        </include>
 
         <node name="sensor_to_robot" pkg="transformations" type="sensor_to_robot.py" args="laser 0.57 0.04 0.5 0 2.36 0"/>
         <node name="robot_to_global" pkg="transformations" type="robot_to_global.py" />
@@ -24,11 +24,11 @@
         <node name="joystick" pkg="joy" type="joy_node" />
         <node name="joy_control" pkg="tracks" type="joy_control.py" />
         <node name="delta_robot_control" pkg="delta_robot" type="control_r2omegas.py" />
-        <node name="get_sensor_data" pkg="acquire_asparagus" type="sick_scanner.py" />
-        <!--
+        <node name="get_sensor_data" pkg="acquire_asparagus" type="sick_scanner.py" /> 
+        -->
         <node name="get_cloud" pkg="acquire_asparagus" type="sick_get_global_cloud.py" />
         <node name="get_asparagus" pkg="acquire_asparagus" type="detect_asparagus.py" />
-        <node name="move_robot" pkg="delta_robot" type="motion_planning.py" />-->
+        <node name="move_robot" pkg="delta_robot" type="motion_planning.py" />
         
 
 
